@@ -2,6 +2,9 @@
 
 interface
 
+//типы кривой
+type CurveType = (LineGraph, ScatterGrpah, BarGraph, FillBetweenGraph);
+
 //класс кривой
 type
   Curve = class
@@ -9,10 +12,13 @@ type
     fname: string;
     fdesc: string;
     ffunc: real -> real;
+    ftype: CurveType;
     x_arr: array of real;
     y_arr: array of real;
   
   public
+    
+    property GetCurveType: CurveType read ftype;
     property Name: string read fname write fname;
     property Description: string read fdesc write fdesc;
     property Func: real -> real read ffunc;
@@ -46,7 +52,7 @@ type
   private
     Title: string;
     Xlim, Ylim: (real, real);
-    curvesList: List<Curve>
+    curvesList: List<Curve>;
   
   public
     constructor Create();
@@ -66,12 +72,13 @@ type
     function Scatter(x, y: array of real): Curve;
     
     //Задать границы по оси X
-    procedure SetXLim(a, b: real);
+    procedure Set_xlim(a, b: real);
     //Задать границы по оси Y
-    procedure SetYLim(a, b: real);
+    procedure Set_ylim(a, b: real);
     //Задать название графика
-    procedure SetTitle(title: string);
-    
+    procedure Set_title(title: string);
+    //Вывести легенду графика
+    procedure Legend();
     
     //Вернуть список кривых
     function GetCurves(): List<Curve>;
@@ -108,18 +115,24 @@ begin
   Result := c;
 end;
 
+//Вывести легенду графика
+procedure Axes.Legend();
+begin
+  
+end;
 
-procedure Axes.SetXLim(a, b: real);
+
+procedure Axes.Set_xlim(a, b: real);
 begin
   Self.Xlim := (a, b);
 end;
 
-procedure Axes.SetYLim(a, b: real);
+procedure Axes.Set_ylim(a, b: real);
 begin
   Self.Ylim := (a, b);
 end;
 
-procedure Axes.SetTitle(title: string);
+procedure Axes.Set_title(title: string);
 begin
   Self.Title := title;
 end;
