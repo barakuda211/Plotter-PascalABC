@@ -1,8 +1,11 @@
 ﻿unit FigureModule;
 
 interface 
+{$reference 'PresentationCore.dll'}
 
-uses AxesModule;
+{$apptype windows}
+
+uses AxesModule, System.Windows.Media;
 
 //Класс области размещения графиков
 type
@@ -13,6 +16,10 @@ type
     
     //Двумерный массив индексов графиков окна
     axesMatrix: array [,] of integer;
+    
+    
+    //цвет фона
+    facecolor: Color;
     
     //инициализация матрицы индексов
     procedure InitAxesMatrix();
@@ -32,6 +39,7 @@ type
     begin
       InitAxesMatrix;
       axesList := new List<Axes>();
+      facecolor := Colors.White;
     end;
   
     //Добавить график
@@ -41,7 +49,12 @@ type
     //Вернуть список графиков окна
     function GetAxes(): List<Axes>;
     
-    
+    //установить цвет фона
+    procedure set_facecolor(col: Color);
+    //установить цвет фона строкой
+    procedure set_facecolor(col: string);
+    //вернуть цвет фона
+    function get_facecolor(): Color;
   
   end;
 
@@ -183,6 +196,15 @@ begin
   Result := (pos, size_x, size_y);
 end;
 
+//установить цвет фона
+procedure Figure.set_facecolor(col: Color) := facecolor := col;
+
+//установить цвет фона строкой
+procedure Figure.set_facecolor(col: string) := 
+  facecolor := Color(ColorConverter.ConvertFromString(col));
+
+//вернуть цвет фона
+function Figure.get_facecolor(): Color := facecolor;
 
 function Figure.NOD(x, y:integer): integer;
 begin

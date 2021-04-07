@@ -1,6 +1,11 @@
 ﻿unit AxesModule;
 
 interface
+{$reference 'PresentationCore.dll'}
+
+{$apptype windows}
+
+uses System.Windows.Media;
 
 //типы кривой
 type CurveType = (LineGraph, ScatterGrpah, BarGraph, FillBetweenGraph);
@@ -53,6 +58,8 @@ type
     Title: string;
     Xlim, Ylim: (real, real);
     curvesList: List<Curve>;
+    //цвет координатной зоны
+    facecolor: Color;
   
   public
     constructor Create();
@@ -60,6 +67,7 @@ type
       Xlim := (0.0, 0.0);
       Ylim := (0.0, 0.0);
       curvesList := new List<Curve>();
+      facecolor := Colors.White;
     end;
     
     //Построить линейный график
@@ -81,11 +89,11 @@ type
     procedure Legend();
     
     //Вернуть список кривых
-    function GetCurves(): List<Curve>;
+    function Get_Curves(): List<Curve>;
     //Вернуть границы по оси Х
-    function GetXLim(): (real, real);
+    function Get_XLim(): (real, real);
     //Вернуть границы по оси Y
-    function GetYLim(): (real, real);
+    function Get_YLim(): (real, real);
     
 end;
 
@@ -138,19 +146,19 @@ begin
 end;
 
 //Вернуть список кривых
-function Axes.GetCurves(): List<Curve>;
+function Axes.Get_Curves(): List<Curve>;
 begin
   Result := curvesList;
 end;
 
 //Вернуть границы по оси Х
-function Axes.GetXLim(): (real, real);
+function Axes.Get_XLim(): (real, real);
 begin
    Result := Xlim;
 end;
 
 //Вернуть границы по оси Y
-function Axes.GetYLim(): (real, real);
+function Axes.Get_YLim(): (real, real);
 begin
    Result := Ylim;
 end;

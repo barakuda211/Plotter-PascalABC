@@ -65,9 +65,9 @@ type
       var min_y := real.MaxValue;
       var max_y := real.MinValue;
       
-      for var j:=0 to ax.GetCurves.Count-1 do
+      for var j:=0 to ax.Get_Curves.Count-1 do
       begin
-        var curve := ax.GetCurves[j];
+        var curve := ax.Get_Curves[j];
         
         if curve.X <> nil then
         begin
@@ -90,9 +90,9 @@ type
       //шаг,если заданы значения
       if flag then
       begin
-        if ax.GetXLim = (0.0,0.0) then
+        if ax.Get_XLim = (0.0,0.0) then
           step_x := field_x/Floor(Abs(max_x-min_x) + 1);
-        if ax.GetYLim = (0.0,0.0) then
+        if ax.Get_YLim = (0.0,0.0) then
           step_y := field_y/Floor(Abs(max_y-min_y) + 1);
       end
       else
@@ -112,7 +112,7 @@ end;
 procedure Show(fig: Figure);
 
 //нарисовать график
-procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes);
+procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes; fig: Figure);
 
 //нарисовать сетку графиков
 procedure DrawMash(rows, cols: integer; x_size, y_size: real);
@@ -124,7 +124,7 @@ procedure WindowSize(width, height: integer);
 procedure DrawCurves(ac: AxesContainer);
  
 //Отрисовка координатного интерфейса
-procedure DrawCoordinates(ac: AxesContainer); 
+procedure DrawCoordinates(ac: AxesContainer; fig: Figure); 
 
  
 implementation
@@ -185,88 +185,32 @@ begin
     
     DrawAxes(col,row,(axes_x_size*count_x)+(Borders.Item1*(count_x-1)),
                       (axes_y_size*count_y)+(Borders.Item2*(count_y-1)),
-                        fig.GetAxes[k]);
+                        fig.GetAxes[k], fig);
   end;
 
 end;
   
-procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes);
+procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes; fig: Figure);
 begin
   var ax_cont := new AxesContainer(x,y,size_x, size_y, ax);
 
-  FillRectangle(x,y,size_x,size_y, Colors.Aqua);
   
-  //поле отрисовки
-  
-  
-  DrawCoordinates(ax_cont);
+  DrawCoordinates(ax_cont, fig);
   
   DrawCurves(ax_cont);
- {
-  var origin := (x_border, size_y-y_border);
-  //размеры поля
-  var field_x := size_x - x_border*2;
-  var field_y := size_y - y_border*2;
-  //длина единицы
-  var step_x := field_x/20;
-  var step_y := field_y/10;
-  
-  //определение границ графика, если есть
-  var flag := false;
-  var min_x := real.MaxValue;
-  var max_x := real.MinValue;
-  var min_y := real.MaxValue;
-  var max_y := real.MinValue;
-  
-  for var j:=0 to ax.GetCurves.Count-1 do
-  begin
-    var curve := ax.GetCurves[j];
-    
-    if curve.X <> nil then
-    begin
-      flag := true;
-      if curve.X[0]<min_x then
-        min_x := curve.X[0];
-      if curve.X[curve.X.Length-1]>max_x then
-        max_x := curve.X[curve.X.Length-1];
-      
-      for var i := 0 to curve.Y.Length-1 do
-      begin
-        if curve.Y[i]<min_y then
-          min_y := curve.Y[i];
-        if curve.Y[i]>max_y then
-          max_y := curve.Y[i];
-      end;
-    end;
-  end;
-  
-  //шаг,если заданы значения
-  if flag then
-  begin
-    if ax.GetXLim = (0.0,0.0) then
-      step_x := field_x/Floor(Abs(max_x-min_x) + 1);
-    if ax.GetYLim = (0.0,0.0) then
-      step_y := field_y/Floor(Abs(max_y-min_y) + 1);
-  end
-  else
-  begin
-    min_x := -10;
-    max_x := 10;
-    min_y := -5;
-    max_y := 5;
-  end;
-  }
   
 end;
 
 //Отрисовка координатного интерфейса
-procedure DrawCoordinates(ac: AxesContainer);
+procedure DrawCoordinates(ac: AxesContainer; fig: Figure);
 begin
   var (field_x, field_y) := ac.fieldsize;
   var (x_border, y_border) := ac.borders;
   var origin := ac.origin;
   var (x,y) := ac.Position;
   var (size_x, size_y) := ac.Size;
+  
+  FillRectangle(x,y,size_x,size_y, fig.get_facecolor);
   
   Rectangle(x+x_border, y+y_border, size_x-2*x_border, size_y-2*y_border);
   //отрисовка чёрточек
