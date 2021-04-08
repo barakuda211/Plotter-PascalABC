@@ -67,19 +67,18 @@ type
   Axes = class
   
   private
-    Title: string;
-    Xlim, Ylim: (real, real);
-    curvesList: List<Curve>;
+    Title: string := '';
+    Xlim: (real, real):= (-10.0, 10.0);
+    Ylim: (real, real):= (-5.0, 5.0);
+    curvesList: List<Curve> := new List<Curve>();
     //цвет координатной зоны
-    facecolor: Color;
-  
+    facecolor: Color := Colors.White;
+    isXBounded: boolean := false;
+    isYBounded: boolean := false;
+    
   public
     constructor Create();
     begin
-      Xlim := (-10.0, 10.0);
-      Ylim := (-5.0, 5.0);
-      curvesList := new List<Curve>();
-      facecolor := Colors.White;
     end;
     
     //Построить линейный график
@@ -106,6 +105,10 @@ type
     function Get_XLim(): (real, real);
     //Вернуть границы по оси Y
     function Get_YLim(): (real, real);
+    //Ограничен ли X
+    function is_x_bounded(): boolean;
+    //Ограничен ли Y
+    function is_y_bounded(): boolean;
     
     //установить цвет фона
     procedure set_facecolor(col: Color);
@@ -151,11 +154,13 @@ end;
 
 procedure Axes.Set_xlim(a, b: real);
 begin
+  Self.isxbounded := true;
   Self.Xlim := (a, b);
 end;
 
 procedure Axes.Set_ylim(a, b: real);
 begin
+  Self.isybounded := true;
   Self.Ylim := (a, b);
 end;
 
@@ -191,6 +196,12 @@ procedure Axes.set_facecolor(col: string) :=
 
 //вернуть цвет фона
 function Axes.get_facecolor(): Color := facecolor;
+
+//Ограничен ли X
+function Axes.is_x_bounded(): boolean := isxbounded;
+
+//Ограничен ли Y
+function Axes.is_y_bounded(): boolean := isybounded;
 
 ///////////////////////////////////////////////////////////////
 

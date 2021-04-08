@@ -41,6 +41,8 @@ type
     property Step: (real, real) read fstep;
     //значения X и Y в точке origin
     property OriginXY: (real, real) read foriginxy;
+    //абсолютные координаты точки отсчёта графика
+    property AbsoluteOrigin: (real, real) read (fposition.Item1+forigin.Item1, fposition.Item2+forigin.Item2);
    
     constructor Create(x, y, size_x, size_y: real; ax: Axes);
     begin
@@ -57,9 +59,11 @@ type
       var field_x := size_x - x_border*2;
       var field_y := size_y - y_border*2;
       ffield := (field_x, field_y);
+
       //длина единицы
       var step_x := field_x/20;
       var step_y := field_y/10;
+
       
       //определение границ графика, если есть
       var flag := false;
@@ -89,13 +93,28 @@ type
         end;
       end;
       
+      
+      
       //шаг,если заданы значения
       if flag then
       begin
-        if ax.Get_XLim = (0.0,0.0) then
-          step_x := field_x/Floor(Abs(max_x-min_x) + 1);
-        if ax.Get_YLim = (0.0,0.0) then
-          step_y := field_y/Floor(Abs(max_y-min_y) + 1);
+        if not ax.is_x_bounded then
+          step_x := field_x/Floor(Abs(max_x-min_x) + 1)
+        else
+        begin
+          step_x := field_x/(ax.Get_XLim.Item2 - ax.Get_XLim.Item1);
+          min_x := ax.Get_XLim.Item1;
+          max_x := ax.Get_XLim.Item2;
+        end;
+        
+        if not ax.is_y_bounded then
+          step_y := field_y/Floor(Abs(max_y-min_y) + 1)
+        else
+        begin
+          step_y := field_y/(ax.Get_YLim.Item2 - ax.Get_YLim.Item1);
+          min_y := ax.Get_YLim.Item1;
+          max_y := ax.Get_YLim.Item2;
+        end;
       end
       else
       begin
@@ -129,6 +148,8 @@ procedure DrawCurves(ac: AxesContainer);
 //Отрисовка координатного интерфейса
 procedure DrawCoordinates(ac: AxesContainer; fig: Figure); 
 
+//Отрисовка линейного графика
+procedure DrawLineGraph(ac: AxesContainer; crv: Curve);
  
 implementation
 
@@ -239,8 +260,30 @@ procedure DrawCurves(ac: AxesContainer);
 begin
   foreach crv: Curve in ac.GetAxes.Get_Curves do
   begin
-    
+    case (crv.GetCurveType) of
+      CurveType.LineGraph: DrawLineGraph(ac, crv)
+    end;
   end;
+end;
+
+//Отрисовка линейного графика
+procedure DrawLineGraph(ac: AxesContainer; crv: Curve);
+begin
+  var o_x := ac.absoluteOrigin.Item1;
+  var o_y := ac.absoluteOrigin.Item2;
+  if crv.IsFunctional then
+    exit;
+  
+  var x1 := (crv.X[0]-ac.originxy.Item1)*ac.step.Item1;
+  var y1 := (crv.Y[0]-ac.originxy.Item2)*ac.step.Item2;
+  for var i := 1 to crv.X.Length-1 do
+  begin
+    var x := (crv.X[i]-ac.originxy.Item1)*ac.step.Item1;
+    var y := (crv.Y[i]-ac.originxy.Item2)*ac.step.Item2;
+    Line(o_x + x1, o_y - y1, o_x + x, o_y - y, crv.get_facecolor);
+    x1 := x; y1 := y;
+  end;
+  
 end;
 
 

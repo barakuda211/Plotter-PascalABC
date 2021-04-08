@@ -43,6 +43,8 @@ type
     end;
   
     //Добавить график
+    function AddSubplot(): Axes;
+    //Добавить график
     function AddSubplot(rows, cols, pos: integer): Axes;
     //Вернуть двумерный массив индексов графиков окна
     function GetAxesMatrix(): array [,] of integer;
@@ -59,7 +61,10 @@ type
   end;
 
 implementation
-  
+ 
+//Добавить график
+function Figure.AddSubplot(): Axes := AddSubplot(1,1,0);
+ 
 function Figure.AddSubplot(rows, cols, pos: integer): Axes;
 begin
   if (rows*cols-1 < pos) or (pos < 0) then
