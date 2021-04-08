@@ -22,6 +22,7 @@ type
     fborders: (real, real);
     ffield: (real, real);
     fstep: (real, real);
+    foriginxy: (real, real);
     
   public
     //вернуть график
@@ -38,6 +39,8 @@ type
     property FieldSize: (real, real) read ffield;
     //размер единицы по осям координатной области
     property Step: (real, real) read fstep;
+    //значения X и Y в точке origin
+    property OriginXY: (real, real) read foriginxy;
    
     constructor Create(x, y, size_x, size_y: real; ax: Axes);
     begin
@@ -69,21 +72,20 @@ type
       begin
         var curve := ax.Get_Curves[j];
         
-        if curve.X <> nil then
+        if curve.IsFunctional then
+          continue;
+        flag := true;
+        if curve.X[0]<min_x then
+          min_x := curve.X[0];
+        if curve.X[curve.X.Length-1]>max_x then
+          max_x := curve.X[curve.X.Length-1];
+        
+        for var i := 0 to curve.Y.Length-1 do
         begin
-          flag := true;
-          if curve.X[0]<min_x then
-            min_x := curve.X[0];
-          if curve.X[curve.X.Length-1]>max_x then
-            max_x := curve.X[curve.X.Length-1];
-          
-          for var i := 0 to curve.Y.Length-1 do
-          begin
-            if curve.Y[i]<min_y then
-              min_y := curve.Y[i];
-            if curve.Y[i]>max_y then
-              max_y := curve.Y[i];
-          end;
+          if curve.Y[i]<min_y then
+            min_y := curve.Y[i];
+          if curve.Y[i]>max_y then
+            max_y := curve.Y[i];
         end;
       end;
       
@@ -97,12 +99,13 @@ type
       end
       else
       begin
-        min_x := -10;
-        max_x := 10;
-        min_y := -5;
-        max_y := 5;
+        min_x := ax.Get_XLim.Item1;
+        max_x := ax.Get_XLim.Item2;
+        min_y := ax.Get_YLim.Item1;
+        max_y := ax.Get_YLim.Item2;
       end;
       
+      foriginxy := (Floor(min_x)*1.0, Floor(min_y)*1.0);
       fstep := (step_x, step_y);
   
     end;
@@ -139,6 +142,7 @@ end;
 
 procedure Show(fig: Figure);
 begin
+  FillRectangle(0,0,w, h, fig.get_facecolor);
   
   var axes_x_size := ((w - Borders.Item1) / fig.GetAxesMatrix.ColCount) - Borders.Item1;
   var axes_y_size := ((h - Borders.Item2) / fig.GetAxesMatrix.RowCount) - Borders.Item2;
@@ -212,7 +216,7 @@ begin
   
   FillRectangle(x,y,size_x,size_y, fig.get_facecolor);
   
-  Rectangle(x+x_border, y+y_border, size_x-2*x_border, size_y-2*y_border);
+  Rectangle(x+x_border, y+y_border, size_x-2*x_border, size_y-2*y_border, ac.GetAxes.get_facecolor);
   //отрисовка чёрточек
   var temp := origin.Item1;
   while temp <= field_x+x_border do
@@ -233,7 +237,10 @@ end;
 //Отрисовка кривых одной координатной сетки
 procedure DrawCurves(ac: AxesContainer);
 begin
-  
+  foreach crv: Curve in ac.GetAxes.Get_Curves do
+  begin
+    
+  end;
 end;
 
 

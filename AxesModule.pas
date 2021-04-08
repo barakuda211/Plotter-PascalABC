@@ -20,6 +20,7 @@ type
     ftype: CurveType;
     x_arr: array of real;
     y_arr: array of real;
+    facecolor: Color;
   
   public
     
@@ -30,16 +31,18 @@ type
     property X: array of real read x_arr;
     property Y: array of real read y_arr;
     
-    constructor Create(f: real->real);
+    constructor Create(f: real->real; ct: CurveType; cl: Color);
     begin
+      facecolor := cl;
       ffunc := f;
     end;
     
-    constructor Create(x,y: array of real);
+    constructor Create(x,y: array of real; ct: CurveType; cl: Color);
     begin
       if (x.Length <> y.Length) then
         raise new Exception('Недостаток введённых данных!');
       
+      facecolor := cl;
       x_arr := x;
       y_arr := y;
       ffunc := nil;
@@ -47,6 +50,15 @@ type
     
     //возвращает значение функции в точке
     function GetY(x: real): real?;
+    //возвращает true, если задана функцией
+    function IsFunctional():boolean;
+    
+    //установить цвет кривой
+    procedure set_facecolor(col: Color);
+    //установить цвет кривой строкой
+    procedure set_facecolor(col: string);
+    //вернуть цвет кривой
+    function get_facecolor(): Color;
   
 end;
 
@@ -64,20 +76,20 @@ type
   public
     constructor Create();
     begin
-      Xlim := (0.0, 0.0);
-      Ylim := (0.0, 0.0);
+      Xlim := (-10.0, 10.0);
+      Ylim := (-5.0, 5.0);
       curvesList := new List<Curve>();
       facecolor := Colors.White;
     end;
     
     //Построить линейный график
-    function Plot(y: array of real): Curve;
+    function Plot(y: array of real; cl: Color := Colors.Red): Curve;
     //Построить линейный график
-    function Plot(x, y: array of real): Curve;
+    function Plot(x, y: array of real; cl: Color := Colors.Red): Curve;
     //Построить точечный график
-    function Scatter(y: array of real): Curve;
+    function Scatter(y: array of real; cl: Color := Colors.Red): Curve;
     //Построить точечный график
-    function Scatter(x, y: array of real): Curve;
+    function Scatter(x, y: array of real; cl: Color := Colors.Red): Curve;
     
     //Задать границы по оси X
     procedure Set_xlim(a, b: real);
@@ -95,30 +107,37 @@ type
     //Вернуть границы по оси Y
     function Get_YLim(): (real, real);
     
+    //установить цвет фона
+    procedure set_facecolor(col: Color);
+    //установить цвет фона строкой
+    procedure set_facecolor(col: string);
+    //вернуть цвет фона
+    function get_facecolor(): Color;
+    
 end;
 
 implementation
 
-function Axes.Plot(y: array of real): Curve;
+function Axes.Plot(y: array of real; cl: Color): Curve;
 begin
-  Result := Plot((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y); 
+  Result := Plot((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y, cl); 
 end;
 
-function Axes.Plot(x, y: array of real): Curve;
+function Axes.Plot(x, y: array of real; cl: Color): Curve;
 begin
-  var c: Curve := new Curve(x,y);
+  var c: Curve := new Curve(x,y,CurveType.LineGraph,cl);
   curvesList.Add(c);
   Result := c;
 end;
 
-function Axes.Scatter(y: array of real): Curve;
+function Axes.Scatter(y: array of real; cl: Color): Curve;
 begin
-  Result := Scatter((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y);
+  Result := Scatter((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y, cl);
 end;
 
-function Axes.Scatter(x, y: array of real): Curve;
+function Axes.Scatter(x, y: array of real; cl: Color): Curve;
 begin
-  var c := new Curve(x,y);
+  var c := new Curve(x,y, CurveType.ScatterGrpah, cl);
   curvesList.Add(c);
   Result := c;
 end;
@@ -163,6 +182,16 @@ begin
    Result := Ylim;
 end;
 
+//установить цвет фона
+procedure Axes.set_facecolor(col: Color) := facecolor := col;
+
+//установить цвет фона строкой
+procedure Axes.set_facecolor(col: string) := 
+  facecolor := Color(ColorConverter.ConvertFromString(col));
+
+//вернуть цвет фона
+function Axes.get_facecolor(): Color := facecolor;
+
 ///////////////////////////////////////////////////////////////
 
 //возвращает значение функции в точке
@@ -189,6 +218,19 @@ begin
   
   Result := y_arr[y_arr.Length-1];
 end;
+
+//возвращает true, если задана функцией
+function Curve.IsFunctional(): boolean := x_arr = nil;
+
+//установить цвет фона
+procedure Curve.set_facecolor(col: Color) := facecolor := col;
+
+//установить цвет фона строкой
+procedure Curve.set_facecolor(col: string) := 
+  facecolor := Color(ColorConverter.ConvertFromString(col));
+
+//вернуть цвет фона
+function Curve.get_facecolor(): Color := facecolor;
 
 initialization
 
