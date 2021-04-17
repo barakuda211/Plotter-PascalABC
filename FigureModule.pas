@@ -1,9 +1,6 @@
 ﻿unit FigureModule;
 
 interface 
-{$reference 'PresentationCore.dll'}
-
-{$apptype windows}
 
 uses AxesModule, System.Windows.Media;
 
