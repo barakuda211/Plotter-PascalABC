@@ -338,13 +338,58 @@ end;
 //Отрисовка линейного графика
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
 begin
-  var dc_curve := ac.CurveGroup(ind).Open;
+  
   var crv := ac.GetAxes.Get_Curves[ind];
   var o_x := ac.absoluteOrigin.Item1;
   var o_y := ac.absoluteOrigin.Item2;
-  if crv.IsFunctional then
-    exit;
   
+  var (x_border, y_border) := ac.borders;
+  var (xx,yy) := ac.Position;
+  var (size_x, size_y) := ac.Size;
+  
+  if crv.IsFunctional then
+  begin
+    var dc_curve := ac.CurveGroup(ind).Open;
+    mainDrawing.Dispatcher.Invoke(()->
+    begin
+      var func_step := 0.001;
+      var (x_min, x_max) := ac.GetAxes.Get_XLim;
+      var (y_min, y_max) := ac.GetAxes.Get_YLim;
+
+      
+      var x := x_min;
+      var y : real?;
+      while (x< x_max) do
+      begin
+        y := crv.GetY(x);
+        if (not y.HasValue) or (y.Value < y_min) or (y.Value > y_max) then
+        begin
+          x+= func_step;
+          continue;
+        end;
+        var draw_x := o_x + (x - ac.originxy.Item1)*ac.step.Item1;
+        var draw_y := o_y - (y.Value - ac.originxy.Item2)*ac.step.Item2;
+        
+        //костыль
+        if (draw_x < xx+x_border) or (draw_x > xx+size_x-x_border) or
+            (draw_y < yy+y_border) or (draw_y >yy+size_y-y_border) then
+        begin
+          x+= func_step;
+          continue;
+        end;
+        
+        dc_curve.DrawEllipse(ColorBrush(crv.get_facecolor),
+                              new Pen(ColorBrush(crv.get_facecolor),1.0),
+                              Pnt(draw_x, draw_y),1.0,1.0);
+        x+= func_step;
+      end;
+      
+    end);
+    dc_curve.Close;
+    exit;
+  end;
+  
+  var dc_curve := ac.CurveGroup(ind).Open;
   mainDrawing.Dispatcher.Invoke(()->
   begin
     var x1 := (crv.X[0]-ac.originxy.Item1)*ac.step.Item1;
@@ -358,7 +403,6 @@ begin
       x1 := x; y1 := y;
     end;
   end);
-  
   dc_curve.Close;
 end;
 

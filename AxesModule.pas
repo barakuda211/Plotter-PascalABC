@@ -82,6 +82,8 @@ type
     end;
     
     //Построить линейный график
+    function Plot(f: real ->real; cl: string := 'red'): Curve;
+    //Построить линейный график
     function Plot(y: array of real; cl: Color := Colors.Red): Curve;
     //Построить линейный график
     function Plot(x, y: array of real; cl: Color := Colors.Red): Curve;
@@ -120,6 +122,14 @@ type
 end;
 
 implementation
+
+function Axes.Plot(f: real ->real; cl: string): Curve;
+begin
+  var c: Curve := new Curve(f,CurveType.LineGraph,
+                  Color(ColorConverter.ConvertFromString(cl)));
+  curvesList.Add(c);
+  Result := c;
+end;
 
 function Axes.Plot(y: array of real; cl: Color): Curve;
 begin
@@ -242,6 +252,8 @@ procedure Curve.set_facecolor(col: string) :=
 
 //вернуть цвет фона
 function Curve.get_facecolor(): Color := facecolor;
+
+
 
 initialization
 
