@@ -17,6 +17,7 @@ begin
   var c := ax.Plot((x:real) -> sin(x),'blue');
   ax.Set_Xlim(-10,19);
   ax.Set_ylim(-2,2);
+  ax.grid := true;
   Show(fig);
 end;
 
@@ -25,6 +26,10 @@ begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
   ax.Plot(new real[10](62,42,-3,43,5,13,56,-10,12,2));
+  ax.Plot((x:real) -> sin(x),'blue');
+  ax.grid := true;
+  ax.EqualProportion := true;
+   ax.Set_Xlim(-10,50);
   Show(fig);
 end;
 

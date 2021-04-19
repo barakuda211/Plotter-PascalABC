@@ -7,12 +7,11 @@ interface
 
 uses System.Windows.Media;
 
-//типы кривой
+///типы кривой
 type CurveType = (LineGraph, ScatterGrpah, BarGraph, FillBetweenGraph);
 
-//класс кривой
-type
-  Curve = class
+///класс кривой
+type Curve = class
   private
     fname: string;
     fdesc: string;
@@ -48,75 +47,81 @@ type
       ffunc := nil;
     end;
     
-    //возвращает значение функции в точке
+    ///возвращает значение функции в точке
     function GetY(x: real): real?;
-    //возвращает true, если задана функцией
+    ///возвращает true, если задана функцией
     function IsFunctional():boolean;
     
-    //установить цвет кривой
+    ///установить цвет кривой
     procedure set_facecolor(col: Color);
-    //установить цвет кривой строкой
+    ///установить цвет кривой строкой
     procedure set_facecolor(col: string);
-    //вернуть цвет кривой
+    ///вернуть цвет кривой
     function get_facecolor(): Color;
   
 end;
 
-//Класс области рисования
-type
-  Axes = class
+///Класс области рисования
+type Axes = class
   
   private
     Title: string := '';
     Xlim: (real, real):= (-10.0, 10.0);
-    Ylim: (real, real):= (-5.0, 5.0);
+    Ylim: (real, real):= (-10.0, 10.0);
     curvesList: List<Curve> := new List<Curve>();
-    //цвет координатной зоны
+    
     facecolor: Color := Colors.White;
     isXBounded: boolean := false;
     isYBounded: boolean := false;
+    fGrid: boolean := false;
+    fEqProp: boolean := false;
     
   public
     constructor Create();
     begin
     end;
+   
+    ///Отображение координатной сетки
+    property Grid: boolean read fgrid write fgrid;
+    ///пропорциональное отображение по обеим осям
+    property EqualProportion: boolean read fEqProp write fEqProp;
     
-    //Построить линейный график
+    ///Построить линейный график
     function Plot(f: real ->real; cl: string := 'red'): Curve;
-    //Построить линейный график
+    ///Построить линейный график
     function Plot(y: array of real; cl: Color := Colors.Red): Curve;
-    //Построить линейный график
+    ///Построить линейный график
     function Plot(x, y: array of real; cl: Color := Colors.Red): Curve;
-    //Построить точечный график
+    ///Построить точечный график
     function Scatter(y: array of real; cl: Color := Colors.Red): Curve;
-    //Построить точечный график
+    ///Построить точечный график
     function Scatter(x, y: array of real; cl: Color := Colors.Red): Curve;
     
-    //Задать границы по оси X
+    ///Задать границы по оси X
     procedure Set_xlim(a, b: real);
-    //Задать границы по оси Y
+    ///Задать границы по оси Y
     procedure Set_ylim(a, b: real);
-    //Задать название графика
+    ///Задать название графика
     procedure Set_title(title: string);
-    //Вывести легенду графика
+    ///Вывести легенду графика
     procedure Legend();
     
-    //Вернуть список кривых
+    ///Вернуть список кривых
     function Get_Curves(): List<Curve>;
-    //Вернуть границы по оси Х
+    ///Вернуть границы по оси Х
     function Get_XLim(): (real, real);
-    //Вернуть границы по оси Y
+    ///Вернуть границы по оси Y
     function Get_YLim(): (real, real);
-    //Ограничен ли X
+    ///Ограничен ли X
     function is_x_bounded(): boolean;
-    //Ограничен ли Y
+    ///Ограничен ли Y
     function is_y_bounded(): boolean;
     
-    //установить цвет фона
+    ///установить цвет фона
     procedure set_facecolor(col: Color);
-    //установить цвет фона строкой
+    ///установить цвет фона строкой
     procedure set_facecolor(col: string);
-    //вернуть цвет фона
+    ///вернуть цвет фона
     function get_facecolor(): Color;
     
 end;
@@ -128,6 +133,7 @@ begin
   var c: Curve := new Curve(f,CurveType.LineGraph,
                   Color(ColorConverter.ConvertFromString(cl)));
   curvesList.Add(c);
+  fEqProp := true;
   Result := c;
 end;
 
@@ -213,6 +219,7 @@ function Axes.is_x_bounded(): boolean := isxbounded;
 //Ограничен ли Y
 function Axes.is_y_bounded(): boolean := isybounded;
 
+
 ///////////////////////////////////////////////////////////////
 
 //возвращает значение функции в точке
@@ -252,6 +259,7 @@ procedure Curve.set_facecolor(col: string) :=
 
 //вернуть цвет фона
 function Curve.get_facecolor(): Color := facecolor;
+
 
 
 

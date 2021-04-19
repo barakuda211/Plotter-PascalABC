@@ -9,13 +9,13 @@ type
   Axes = AxesModule.Axes;
 
 
-//Создать область отображения графиков
+///Создать область отображения графиков
 function GetFigure(): Figure;
-//Создать область отображения с графиками
+///Создать область отображения с графиками
 function GetSubplots(rows, cols: integer): (Figure, List<Axes>);
-//Отобразить окно с графиком
+///Отобразить окно с графиком
 procedure Show(fig: Figure);
-//Задать размеры окна
+///Задать размеры окна
 procedure WindowSize(width, height: integer);
 
 

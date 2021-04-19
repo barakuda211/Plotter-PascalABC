@@ -4,28 +4,27 @@ interface
 
 uses AxesModule, System.Windows.Media;
 
-//Класс области размещения графиков
-type
-  Figure = class
+///Класс области размещения графиков
+type Figure = class
   private
-    //Список графиков окна
+    ///Список графиков окна
     axesList: List<Axes>;
     
-    //Двумерный массив индексов графиков окна
+    ///Двумерный массив индексов графиков окна
     axesMatrix: array [,] of integer;
     
     
-    //цвет фона
+    ///цвет фона
     facecolor: Color;
     
-    //инициализация матрицы индексов
+    ///инициализация матрицы индексов
     procedure InitAxesMatrix();
-    //инициализация матрицы с заданным размером
+    ///инициализация матрицы с заданным размером
     procedure InitAxesMatrix(rows, cols: integer; var am: array [,] of integer);
-    //подстроить размер массива графиков
+    ///подстроить размер массива графиков
     function FitInAxesMatrix(rows, cols, pos: integer): integer;
     
-    //возвращает позицию графика в сетке и его размеры
+    ///возвращает позицию графика в сетке и его размеры
     function SizeOfAxes(id: integer): (integer, integer, integer);
   
     function NOD(x, y:integer): integer;
@@ -39,27 +38,26 @@ type
       facecolor := Colors.White;
     end;
   
-    //Добавить график
+    ///Добавить график
     function AddSubplot(): Axes;
-    //Добавить график
+    ///Добавить график
     function AddSubplot(rows, cols, pos: integer): Axes;
-    //Вернуть двумерный массив индексов графиков окна
+    ///Вернуть двумерный массив индексов графиков окна
     function GetAxesMatrix(): array [,] of integer;
-    //Вернуть список графиков окна
+    ///Вернуть список графиков окна
     function GetAxes(): List<Axes>;
     
-    //установить цвет фона
+    ///установить цвет фона
     procedure set_facecolor(col: Color);
-    //установить цвет фона строкой
+    ///установить цвет фона строкой
     procedure set_facecolor(col: string);
-    //вернуть цвет фона
+    ///вернуть цвет фона
     function get_facecolor(): Color;
   
   end;
 
 implementation
  
-//Добавить график
 function Figure.AddSubplot(): Axes := AddSubplot(1,1,0);
  
 function Figure.AddSubplot(rows, cols, pos: integer): Axes;

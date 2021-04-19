@@ -12,14 +12,14 @@ uses System.Windows.Controls;
 uses System.Windows.Media;
 uses FigureModule, AxesModule; 
 
-//шаг отрисовки
+///шаг отрисовки
 var step := 0.1;
-//Размеры окна (костыль)
+///Размеры окна (костыль)
 var w, h: real;
-//отступы между графиками по осям X и Y
+///отступы между графиками по осям X и Y
 var Borders := (25, 12);
 
-//размеры границ окна
+///размеры границ окна
 var wp: real := (SystemParameters.BorderWidth + SystemParameters.FixedFrameVerticalBorderWidth) * 2;
 var hp: real := SystemParameters.WindowCaptionHeight + (SystemParameters.BorderWidth + SystemParameters.FixedFrameHorizontalBorderHeight) * 2;
 
@@ -43,9 +43,8 @@ var host := new Canvas;
 var mainDrawing := new DrawingGroup;
 var mainGroup := new DrawingGroup;
 
-//контейнер для позиционирования графика
-type
-  AxesContainer = class
+///контейнер для позиционирования графика
+type AxesContainer = class
   private
     fax: Axes;
     fposition: (real, real);
@@ -57,30 +56,34 @@ type
     foriginxy: (real, real);
     fgroup: DrawingGroup := new DrawingGroup;
     fcurvesGroups: List<DrawingGroup> := new List<DrawingGroup>;
+    flinewidth: real := 1;  //???
     
   public
-    //вернуть график
+    ///вернуть график
     property GetAxes: Axes read fax;
-    //позиция графика
+    ///позиция графика
     property Position: (real, real) read fposition;
-    //размер графика
+    ///размер графика
     property Size: (real, real) read fsize;
-    //левый нижний угол координатной области
+    ///левый нижний угол координатной области
     property Origin: (real, real) read forigin;
-    //отступы от краёв
+    ///отступы от краёв
     property Borders: (real, real) read fborders;
-    //размеры координатной области
+    ///размеры координатной области
     property FieldSize: (real, real) read ffield;
-    //размер единицы по осям координатной области
+    ///размер единицы по осям координатной области
     property Step: (real, real) read fstep;
-    //значения X и Y в точке origin
+    ///значения X и Y в точке origin
     property OriginXY: (real, real) read foriginxy;
-    //абсолютные координаты точки отсчёта графика
+    ///абсолютные координаты точки отсчёта графика
     property AbsoluteOrigin: (real, real) read (fposition.Item1+forigin.Item1, fposition.Item2+forigin.Item2);
-    //Группа рисования
+    ///Группа рисования
     property Group: DrawingGroup read fgroup;
-    //Возвращает группу кривой индекса i
+    ///Возвращает толщину отрисовки коорд. элементов
+    property LineWidth: real read flinewidth;
+    ///Возвращает группу кривой индекса i
     function CurveGroup(i: integer): DrawingGroup;
+    
    
     constructor Create(x, y, size_x, size_y: real; ax: Axes);
     begin
@@ -170,6 +173,9 @@ type
         max_y := ax.Get_YLim.Item2;
       end;
       
+      if ax.EqualProportion then
+        (step_x, step_y) := (min(step_x, step_y),min(step_x, step_y));
+      
       foriginxy := (Floor(min_x)*1.0, Floor(min_y)*1.0);
       fstep := (step_x, step_y);
   
@@ -180,26 +186,29 @@ function ColorBrush(c: Color):SolidColorBrush;
 function Rect(x,y,w,h: real):System.Windows.Rect;
 function Pnt(x,y: real):Point;
 
-//Отобразить окно с графиком
+///Отобразить окно с графиком
 procedure Show(fig: Figure);
 
-//нарисовать график
+///нарисовать график
 procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes; fig: Figure);
 
-//нарисовать сетку графиков
+///нарисовать сетку графиков
 procedure DrawMash(rows, cols: integer; x_size, y_size: real);
 
-//Задать размеры окна
+///Задать размеры окна
 procedure WindowSize(width, height: integer);
 
-//Отрисовка кривых одной координатной сетки
+///Отрисовка кривых одной координатной сетки
 procedure DrawCurves(ac: AxesContainer);
  
-//Отрисовка координатного интерфейса
+///Отрисовка координатного интерфейса
 procedure DrawCoordinates(ac: AxesContainer; fig: Figure); 
 
-//Отрисовка линейного графика
+///Отрисовка линейного графика
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
+
+///Расчёт множителя для отображения
+function AxesNumberMultiplier(ac: axescontainer):(real,real);
  
 implementation
 
@@ -280,44 +289,54 @@ end;
 //Отрисовка координатного интерфейса
 procedure DrawCoordinates(ac: AxesContainer; fig: Figure);
 begin
-  var dc_ax := ac.Group.Open;
+  var (field_x, field_y) := ac.fieldsize;
+  var (x_border, y_border) := ac.borders;
+  var origin := ac.origin;
+  var (x,y) := ac.Position;
+  var (size_x, size_y) := ac.Size;
   
+  var(x_mult, y_mult) := AxesNumberMultiplier(ac);
+  
+  var dc_ax := ac.Group.Open;
   mainDrawing.Dispatcher.Invoke(()->
-  begin
-    var (field_x, field_y) := ac.fieldsize;
-    var (x_border, y_border) := ac.borders;
-    var origin := ac.origin;
-    var (x,y) := ac.Position;
-    var (size_x, size_y) := ac.Size;
-    
-    
+  begin 
     //FillRectangle(x,y,size_x,size_y, fig.get_facecolor);
     
     dc_ax.DrawRectangle(ColorBrush(fig.get_facecolor),nil, Rect(x, y, size_x, size_y));
     
     //Rectangle(x+x_border, y+y_border, size_x-2*x_border, size_y-2*y_border, ac.GetAxes.get_facecolor);
-    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),1.0), Pnt(x+x_border,y+y_border), Pnt(x+size_x-x_border, y+y_border));
-    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),1.0), Pnt(x+size_x-x_border, y+y_border), Pnt(x+size_x-x_border, y+size_y-y_border));
-    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),1.0), Pnt(x+size_x-x_border, y+size_y-y_border), Pnt(x+x_border, y+size_y-y_border));
-    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),1.0), Pnt(x+x_border, y+size_y-y_border), Pnt(x+x_border, y+y_border));
+    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+x_border,y+y_border), Pnt(x+size_x-x_border, y+y_border));
+    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+size_x-x_border, y+y_border), Pnt(x+size_x-x_border, y+size_y-y_border));
+    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+size_x-x_border, y+size_y-y_border), Pnt(x+x_border, y+size_y-y_border));
+    dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+x_border, y+size_y-y_border), Pnt(x+x_border, y+y_border));
     
-    //отрисовка чёрточек
+    
+    
+    //отрисовка чёрточек и сетки
     var temp := origin.Item1;
     while temp <= field_x+x_border do
     begin
       //Line(x+temp, y+origin.Item2, x+temp, y+origin.Item2+y_border*0.3);
-      dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),1.0), Pnt(x+temp, y+origin.Item2), Pnt(x+temp, y+origin.Item2+y_border*0.3));
+      dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+temp, y+origin.Item2), Pnt(x+temp, y+origin.Item2+y_border*0.3));
       
-      temp += ac.Step.Item1;
+      //сетка
+      if ac.GetAxes.grid then
+        dc_ax.DrawLine(new Pen(ColorBrush(Colors.Gray),ac.LineWidth*0.8), Pnt(x+temp, y+origin.Item2), Pnt(x+temp, y+y_border));
+      
+      temp += ac.Step.Item1*x_mult;
     end;
     
     temp := origin.Item2;
     while temp >= y_border do
     begin
       //Line(x+origin.Item1, y+temp, x+origin.Item1-x_border*0.3, y+temp);
-      dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),1.0), Pnt(x+origin.Item1, y+temp), Pnt(x+origin.Item1-x_border*0.3, y+temp));
+      dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+origin.Item1, y+temp), Pnt(x+origin.Item1-x_border*0.3, y+temp));
       
-      temp -= ac.Step.Item2;
+      //сетка
+      if ac.GetAxes.grid then
+        dc_ax.DrawLine(new Pen(ColorBrush(Colors.Gray),ac.LineWidth*0.8), Pnt(x+origin.Item1, y+temp), Pnt(x+x_border+field_x, y+temp));
+      
+      temp -= ac.Step.Item2*y_mult;
     end;
   end);
   dc_ax.Close;
@@ -413,6 +432,42 @@ begin
     raise new Exception('Выход за границы списка групп отрисовки кривых!');
   Result := fcurvesGroups[i];
 end;
+
+
+function AxesNumberMultiplier(ac: axescontainer):(real,real);
+begin
+  var (step_x, step_y) := ac.Step;
+  var (field_x, field_y) := ac.FieldSize;
+  
+  var x_mult1 := 1;
+  var x_mult2 := 1.0;
+  
+  while field_x/(step_x*x_mult1*x_mult2) > 10 do
+  begin
+    case x_mult1 of
+      1: x_mult1 := 2;
+      2: x_mult1 := 5;
+      else 
+        (x_mult1, x_mult2) := (1, x_mult2*10);
+    end;
+  end;
+  
+  var y_mult1 := 1;
+  var y_mult2 := 1.0;
+  
+  while field_y/(step_y*y_mult1*y_mult2) > 10 do
+  begin
+    case y_mult1 of
+      1: y_mult1 := 2;
+      2: y_mult1 := 5;
+      else 
+        (y_mult1, y_mult2) := (1, y_mult2*10);
+    end;
+  end;
+  
+  Result := (x_mult1*x_mult2, y_mult1*y_mult2);
+end;
+
 
 //нарисовать сетку графиков
 procedure DrawMash(rows, cols: integer; x_size, y_size: real);
