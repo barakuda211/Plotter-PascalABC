@@ -3,6 +3,7 @@
 interface
 {$reference 'PresentationFramework.dll'}
 {$reference 'WindowsBase.dll'}
+{$reference 'System.Windows.Forms.dll'}
 {$reference 'PresentationCore.dll'}
 
 {$apptype windows}
@@ -11,6 +12,8 @@ uses System.Windows;
 uses System.Windows.Controls;
 uses System.Windows.Media;
 uses System.Globalization;
+//uses System.Windows.Forms;
+
 uses FigureModule, AxesModule; 
 
 ///шаг отрисовки
@@ -19,13 +22,15 @@ var step := 0.1;
 var w, h: real;
 ///отступы между графиками по осям X и Y
 var Borders := (25, 12);
+///отображаемый экземпляр Figure
+var fig: Figure;
+
 
 ///размеры границ окна
 var wp: real := (SystemParameters.BorderWidth + SystemParameters.FixedFrameVerticalBorderWidth) * 2;
 var hp: real := SystemParameters.WindowCaptionHeight + (SystemParameters.BorderWidth + SystemParameters.FixedFrameHorizontalBorderHeight) * 2;
 
-type
-  VisualContainer = class(FrameworkElement)
+type VisualContainer = class(FrameworkElement)
   	_drawing: Drawing;
     public
     	constructor(d: Drawing);
@@ -183,14 +188,20 @@ type AxesContainer = class
       fstep := (step_x, step_y);
   
     end;
+    
+    ///Возвращает значение функции в указанной глобальной позиции
+    function GetXYByMouse(x,y: real):(real?,real?);
 end;
+
+///список отображаемых координатных сеток
+var AxContList := new List<AxesContainer>;
 
 function ColorBrush(c: Color):SolidColorBrush;
 function Rect(x,y,w,h: real):System.Windows.Rect;
 function Pnt(x,y: real):Point;
 
 ///Отобразить окно с графиком
-procedure Show(fig: Figure);
+procedure Show(f: Figure);
 
 ///нарисовать график
 procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes; fig: Figure);
@@ -215,8 +226,9 @@ function AxesNumberMultiplier(ac: axescontainer):(integer,integer);
  
 implementation
 
-procedure Show(fig: Figure);
+procedure Show(f: Figure);
 begin
+  fig := f;
   
   var dc := mainGroup.Open;
   //FillRectangle(0,0,w, h, fig.get_facecolor);
@@ -272,16 +284,35 @@ begin
     DrawAxes(col,row,(axes_x_size*count_x)+(Borders.Item1*(count_x-1)),
                       (axes_y_size*count_y)+(Borders.Item2*(count_y-1)),
                         fig.GetAxes[k], fig);
-                        
+       
   end;
 
+  MainWindow.MouseMove += (o,e)->
+  begin
+    var p := e.GetPosition(o as System.Windows.IInputElement);
+    var (x, y) := (-1.0, -1.0);
+    
+    foreach var cont in AxContList do
+    begin
+      var pos := cont.GetXYByMouse(p.X, p.Y);
+      if pos.Item1.HasValue then
+      begin
+        (x,y) := (pos.Item1.Value, pos.Item2.Value);
+        break;
+      end;
+    end;
+    
+    MainWindow.Title := '('+x+'; '+y+')';
+  end;
+  
   app.Run(MainWindow);
 end;
   
 procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes; fig: Figure);
 begin
   var ax_cont := new AxesContainer(x,y,size_x, size_y, ax);
-
+  
+  AxContList.Add(ax_cont);
   
   DrawCoordinates(ax_cont, fig);
   
@@ -551,14 +582,44 @@ begin
   h := height;
 end;
 
+procedure OnMouseMove(sender: object; e: System.Windows.Input.MouseEventArgs);
+begin
+  var p := e.GetPosition(sender as System.Windows.IInputElement);
+  MainWindow.Title := '('+p.X+'; '+p.Y+')';
+end;
+
 function ColorBrush(c: Color) := new SolidColorBrush(c);
 function Rect(x,y,w,h: real) := new System.Windows.Rect(x,y,w,h);
 function Pnt(x,y: real) := new Point(x,y);
+
+//////////////////////////////////
+
+function AxesContainer.GetXYByMouse(x,y: real):(real?,real?);
+begin
+  var x1,y1 :real?;
+  if (x >= AbsoluteOrigin.Item1) 
+      and ( x <= AbsoluteOrigin.Item1+FieldSize.Item1 )
+      and ( y <= AbsoluteOrigin.Item2)
+      and ( y >= AbsoluteOrigin.Item2-FieldSize.Item2 ) then
+  begin
+    x1 := OriginXY.Item1 + (x - AbsoluteOrigin.Item1)/Step.Item1;
+    y1 := OriginXY.Item2 + (AbsoluteOrigin.Item2 - y)/Step.Item2;
+  end 
+  else
+  begin
+    x1 := nil;
+    y1 := nil;
+  end;
+  
+  Result := (x1, y1);
+end;
+
 
 initialization
   
   MainWindow.Content := host;
   WindowSize(800, 600);
+  
   
   mainDrawing.Children.Add(mainGroup);
   var vis_cont := new VisualContainer(mainDrawing);
