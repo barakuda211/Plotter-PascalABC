@@ -10,6 +10,7 @@ interface
 uses System.Windows; 
 uses System.Windows.Controls;
 uses System.Windows.Media;
+uses System.Globalization;
 uses FigureModule, AxesModule; 
 
 ///шаг отрисовки
@@ -148,27 +149,29 @@ type AxesContainer = class
       if flag then
       begin
         if not ax.is_x_bounded then
-          step_x := field_x/Floor(Abs(max_x-min_x) + 1)
-        else
-        begin
-          step_x := field_x/(ax.Get_XLim.Item2 - ax.Get_XLim.Item1);
-          min_x := ax.Get_XLim.Item1;
-          max_x := ax.Get_XLim.Item2;
-        end;
-        
+          step_x := field_x/Floor(Abs(max_x-min_x) + 1);
+     
         if not ax.is_y_bounded then
-          step_y := field_y/Floor(Abs(max_y-min_y) + 1)
-        else
-        begin
-          step_y := field_y/(ax.Get_YLim.Item2 - ax.Get_YLim.Item1);
-          min_y := ax.Get_YLim.Item1;
-          max_y := ax.Get_YLim.Item2;
-        end;
+          step_y := field_y/Floor(Abs(max_y-min_y) + 1);
       end
       else
       begin
         min_x := ax.Get_XLim.Item1;
         max_x := ax.Get_XLim.Item2;
+        min_y := ax.Get_YLim.Item1;
+        max_y := ax.Get_YLim.Item2;
+      end;
+      
+      if (ax.is_x_bounded) then
+      begin
+        step_x := field_x/(ax.Get_XLim.Item2 - ax.Get_XLim.Item1);
+        min_x := ax.Get_XLim.Item1;
+        max_x := ax.Get_XLim.Item2;
+      end;
+      
+      if (ax.is_y_bounded) then
+      begin
+        step_y := field_y/(ax.Get_YLim.Item2 - ax.Get_YLim.Item1);
         min_y := ax.Get_YLim.Item1;
         max_y := ax.Get_YLim.Item2;
       end;
@@ -208,7 +211,7 @@ procedure DrawCoordinates(ac: AxesContainer; fig: Figure);
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
 
 ///Расчёт множителя для отображения
-function AxesNumberMultiplier(ac: axescontainer):(real,real);
+function AxesNumberMultiplier(ac: axescontainer):(integer,integer);
  
 implementation
 
@@ -310,7 +313,15 @@ begin
     dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+size_x-x_border, y+size_y-y_border), Pnt(x+x_border, y+size_y-y_border));
     dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+x_border, y+size_y-y_border), Pnt(x+x_border, y+y_border));
     
-    
+    //число на оси координат
+    var num := ac.OriginXY.Item1;
+    var ftext := new FormattedText(
+        num.ToString,
+        CultureInfo.GetCultureInfo('en-us'),
+        FlowDirection.LeftToRight,
+        new Typeface('Verdana'),
+        y_border * 0.4,
+        Brushes.Black);
     
     //отрисовка чёрточек и сетки
     var temp := origin.Item1;
@@ -318,23 +329,52 @@ begin
     begin
       //Line(x+temp, y+origin.Item2, x+temp, y+origin.Item2+y_border*0.3);
       dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+temp, y+origin.Item2), Pnt(x+temp, y+origin.Item2+y_border*0.3));
+      dc_ax.DrawText(ftext, Pnt(x+temp-ftext.Width/2, y+origin.Item2+y_border*0.35));
       
       //сетка
       if ac.GetAxes.grid then
         dc_ax.DrawLine(new Pen(ColorBrush(Colors.Gray),ac.LineWidth*0.8), Pnt(x+temp, y+origin.Item2), Pnt(x+temp, y+y_border));
       
+      num += x_mult;
+      ftext := new FormattedText(
+        num.ToString,
+        CultureInfo.GetCultureInfo('en-us'),
+        FlowDirection.LeftToRight,
+        new Typeface('Verdana'),
+        y_border * 0.4,
+        Brushes.Black);
+      
       temp += ac.Step.Item1*x_mult;
     end;
+    
+    num := ac.OriginXY.Item2;
+    ftext := new FormattedText(
+        num.ToString,
+        CultureInfo.GetCultureInfo('en-us'),
+        FlowDirection.LeftToRight,
+        new Typeface('Verdana'),
+        y_border * 0.4,
+        Brushes.Black);
     
     temp := origin.Item2;
     while temp >= y_border do
     begin
       //Line(x+origin.Item1, y+temp, x+origin.Item1-x_border*0.3, y+temp);
       dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+origin.Item1, y+temp), Pnt(x+origin.Item1-x_border*0.3, y+temp));
+      dc_ax.DrawText(ftext, Pnt(x+origin.Item1-x_border*0.4-ftext.Width, y+temp-ftext.Height/2));
       
       //сетка
       if ac.GetAxes.grid then
         dc_ax.DrawLine(new Pen(ColorBrush(Colors.Gray),ac.LineWidth*0.8), Pnt(x+origin.Item1, y+temp), Pnt(x+x_border+field_x, y+temp));
+      
+      num += y_mult;
+      ftext := new FormattedText(
+        num.ToString,
+        CultureInfo.GetCultureInfo('en-us'),
+        FlowDirection.LeftToRight,
+        new Typeface('Verdana'),
+        y_border * 0.4,
+        Brushes.Black);
       
       temp -= ac.Step.Item2*y_mult;
     end;
@@ -368,30 +408,40 @@ begin
   
   if crv.IsFunctional then
   begin
+    var func_step := 0.001;
+    var ax := ac.GetAxes;
+    var (x_min, x_max) := ax.Get_XLim;
+    var (y_min, y_max) := ax.Get_YLim;
+    var (x_bounded, y_bounded) := (ax.is_x_bounded, ax.is_y_bounded);
+    
     var dc_curve := ac.CurveGroup(ind).Open;
     mainDrawing.Dispatcher.Invoke(()->
     begin
-      var func_step := 0.001;
-      var (x_min, x_max) := ac.GetAxes.Get_XLim;
-      var (y_min, y_max) := ac.GetAxes.Get_YLim;
-
       
       var x := x_min;
       var y : real?;
-      while (x< x_max) do
+      while (true) do
       begin
+        var draw_x := o_x + (x - ac.originxy.Item1)*ac.step.Item1;
+        
+        if (x_bounded and (x >= x_max))
+            or (draw_x > xx+size_x-x_border) then
+          break;
+        
         y := crv.GetY(x);
-        if (not y.HasValue) or (y.Value < y_min) or (y.Value > y_max) then
+        if (not y.HasValue) or 
+           (y_bounded and ((y.Value < y_min) or (y.Value > y_max))) then
         begin
           x+= func_step;
           continue;
         end;
-        var draw_x := o_x + (x - ac.originxy.Item1)*ac.step.Item1;
+        
         var draw_y := o_y - (y.Value - ac.originxy.Item2)*ac.step.Item2;
         
         //костыль
-        if (draw_x < xx+x_border) or (draw_x > xx+size_x-x_border) or
-            (draw_y < yy+y_border) or (draw_y >yy+size_y-y_border) then
+        if (draw_x < xx+x_border)  or
+            (draw_y < yy+y_border) or 
+            (draw_y >yy+size_y-y_border) then
         begin
           x+= func_step;
           continue;
@@ -434,13 +484,13 @@ begin
 end;
 
 
-function AxesNumberMultiplier(ac: axescontainer):(real,real);
+function AxesNumberMultiplier(ac: axescontainer):(integer, integer);
 begin
   var (step_x, step_y) := ac.Step;
   var (field_x, field_y) := ac.FieldSize;
   
   var x_mult1 := 1;
-  var x_mult2 := 1.0;
+  var x_mult2 := 1;
   
   while field_x/(step_x*x_mult1*x_mult2) > 10 do
   begin
@@ -453,7 +503,7 @@ begin
   end;
   
   var y_mult1 := 1;
-  var y_mult2 := 1.0;
+  var y_mult2 := 1;
   
   while field_y/(step_y*y_mult1*y_mult2) > 10 do
   begin

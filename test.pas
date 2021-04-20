@@ -5,8 +5,9 @@ begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
   var c := ax.Plot((x:real) -> x*x,'green');
-  ax.Set_Xlim(-5,5);
-  ax.Set_ylim(0,100);
+  //ax.Set_ylim(0,5);
+  //ax.Set_xlim(-5,5);
+  ax.Grid := true;
   Show(fig);
 end;
 
@@ -29,14 +30,13 @@ begin
   ax.Plot((x:real) -> sin(x),'blue');
   ax.grid := true;
   ax.EqualProportion := true;
-   ax.Set_Xlim(-10,50);
   Show(fig);
 end;
 
 begin
   //test_func1;
   //test_func2;
-  //test_arr;
+  test_arr;
   
   
   
