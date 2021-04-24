@@ -89,13 +89,13 @@ type Axes = class
     ///Построить линейный график
     function Plot(f: real ->real; cl: string := 'red'): Curve;
     ///Построить линейный график
-    function Plot(y: array of real; cl: Color := Colors.Red): Curve;
+    function Plot(y: array of real; cl: string := 'red'): Curve;
     ///Построить линейный график
-    function Plot(x, y: array of real; cl: Color := Colors.Red): Curve;
+    function Plot(x, y: array of real; cl: string := 'red'): Curve;
     ///Построить точечный график
-    function Scatter(y: array of real; cl: Color := Colors.Red): Curve;
+    function Scatter(y: array of real; cl: string := 'red'): Curve;
     ///Построить точечный график
-    function Scatter(x, y: array of real; cl: Color := Colors.Red): Curve;
+    function Scatter(x, y: array of real; cl: string := 'red'): Curve;
     
     ///Задать границы по оси X
     procedure Set_xlim(a, b: real);
@@ -126,37 +126,42 @@ type Axes = class
     
 end;
 
+///возвращает цвет по строке
+function ColorFromString(cl: string): Color;
+
 implementation
 
 function Axes.Plot(f: real ->real; cl: string): Curve;
 begin
-  var c: Curve := new Curve(f,CurveType.LineGraph,
-                  Color(ColorConverter.ConvertFromString(cl)));
+  var media_color := ColorFromString(cl);
+  var c: Curve := new Curve(f,CurveType.LineGraph,media_color);
   curvesList.Add(c);
   fEqProp := true;
   Result := c;
 end;
 
-function Axes.Plot(y: array of real; cl: Color): Curve;
+function Axes.Plot(y: array of real; cl: string): Curve;
 begin
-  Result := Plot((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y, cl); 
+  Result := Plot((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y, cl);
 end;
 
-function Axes.Plot(x, y: array of real; cl: Color): Curve;
+function Axes.Plot(x, y: array of real; cl: string): Curve;
 begin
-  var c: Curve := new Curve(x,y,CurveType.LineGraph,cl);
+  var media_color := ColorFromString(cl);
+  var c := new Curve(x,y,CurveType.LineGraph, media_color);
   curvesList.Add(c);
   Result := c;
 end;
 
-function Axes.Scatter(y: array of real; cl: Color): Curve;
+function Axes.Scatter(y: array of real; cl: string): Curve;
 begin
-  Result := Scatter((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y, cl);
+  Result := Scatter((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y,cl);
 end;
 
-function Axes.Scatter(x, y: array of real; cl: Color): Curve;
+function Axes.Scatter(x, y: array of real; cl: string): Curve;
 begin
-  var c := new Curve(x,y, CurveType.ScatterGrpah, cl);
+  var media_color := ColorFromString(cl);
+  var c: Curve := new Curve(x,y,CurveType.ScatterGrpah,media_color);
   curvesList.Add(c);
   Result := c;
 end;
@@ -247,6 +252,8 @@ begin
   Result := y_arr[y_arr.Length-1];
 end;
 
+function ColorFromString(cl: string) := Color(ColorConverter.ConvertFromString(cl));
+
 //возвращает true, если задана функцией
 function Curve.IsFunctional(): boolean := x_arr = nil;
 
@@ -254,14 +261,10 @@ function Curve.IsFunctional(): boolean := x_arr = nil;
 procedure Curve.set_facecolor(col: Color) := facecolor := col;
 
 //установить цвет фона строкой
-procedure Curve.set_facecolor(col: string) := 
-  facecolor := Color(ColorConverter.ConvertFromString(col));
+procedure Curve.set_facecolor(col: string) := facecolor := ColorFromString(col);
 
 //вернуть цвет фона
 function Curve.get_facecolor(): Color := facecolor;
-
-
-
 
 initialization
 

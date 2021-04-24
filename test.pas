@@ -54,25 +54,44 @@ begin
   Show(fig);
 end;
 
-procedure test_arr;
+procedure test_func_array;
 begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
-  ax.Plot(new real[10](62,42,-3,43,5,13,56,-10,12,2));
+  ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1));
   ax.Plot((x:real) -> sin(x),'blue');
   ax.grid := true;
   ax.EqualProportion := true;
   Show(fig);
 end;
 
+procedure test_colors;
+begin
+  var fig := new Figure();
+  fig.set_facecolor('yellow');
+  var ax := fig.AddSubplot(2,1,0);
+  ax.set_facecolor('green');
+  ax.Plot(ArrRandomReal(10));
+  ax.Plot(ArrRandomReal(10),'blue');
+  ax.Plot(ArrRandomReal(10),'gray');
+  
+  ax := fig.AddSubplot(2,1,1);
+  ax.set_facecolor('orange');
+  ax.Plot(ArrRandomReal(10),'black');
+  ax.Plot(ArrRandomReal(10),'cyan');
+  ax.Plot(ArrRandomReal(10),'lime');
+  ax.Grid := true;
+  ax.EqualProportion := true;
+  
+  Show(fig);
+end;
+
 begin
   WindowSize(1280,720);
-  //test_func1;
-  //test_func2;
-  //test_arr;
-  
-  test_many_arrays;
+
+  test_func_array;
+  //test_many_arrays;
   //test_many_funcs;
-  
+  //test_colors;
   
 end.

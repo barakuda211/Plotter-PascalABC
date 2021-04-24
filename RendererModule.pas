@@ -336,7 +336,7 @@ begin
   begin 
     //FillRectangle(x,y,size_x,size_y, fig.get_facecolor);
     
-    dc_ax.DrawRectangle(ColorBrush(fig.get_facecolor),nil, Rect(x, y, size_x, size_y));
+    dc_ax.DrawRectangle(ColorBrush(ac.GetAxes.get_facecolor),nil, Rect(x, y, size_x, size_y));
     
     //Rectangle(x+x_border, y+y_border, size_x-2*x_border, size_y-2*y_border, ac.GetAxes.get_facecolor);
     dc_ax.DrawLine(new Pen(ColorBrush(Colors.Black),ac.LineWidth), Pnt(x+x_border,y+y_border), Pnt(x+size_x-x_border, y+y_border));
