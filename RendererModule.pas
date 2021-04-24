@@ -12,7 +12,6 @@ uses System.Windows;
 uses System.Windows.Controls;
 uses System.Windows.Media;
 uses System.Globalization;
-//uses System.Windows.Forms;
 
 uses FigureModule, AxesModule; 
 
@@ -21,7 +20,7 @@ var step := 0.1;
 ///Размеры окна (костыль)
 var w, h: real;
 ///отступы между графиками по осям X и Y
-var Borders := (25, 12);
+var Borders := (10, 8);
 ///отображаемый экземпляр Figure
 var fig: Figure;
 
@@ -154,10 +153,10 @@ type AxesContainer = class
       if flag then
       begin
         if not ax.is_x_bounded then
-          step_x := field_x/Floor(Abs(max_x-min_x) + 1);
+          step_x := field_x/Floor(Abs(max_x-min_x) + 2);
      
         if not ax.is_y_bounded then
-          step_y := field_y/Floor(Abs(max_y-min_y) + 1);
+          step_y := field_y/Floor(Abs(max_y-min_y) + 2);
       end
       else
       begin
@@ -287,6 +286,7 @@ begin
        
   end;
 
+  
   MainWindow.MouseMove += (o,e)->
   begin
     var p := e.GetPosition(o as System.Windows.IInputElement);
@@ -351,7 +351,7 @@ begin
         CultureInfo.GetCultureInfo('en-us'),
         FlowDirection.LeftToRight,
         new Typeface('Verdana'),
-        y_border * 0.4,
+        y_border * 0.7,
         Brushes.Black);
     
     //отрисовка чёрточек и сетки
@@ -372,7 +372,7 @@ begin
         CultureInfo.GetCultureInfo('en-us'),
         FlowDirection.LeftToRight,
         new Typeface('Verdana'),
-        y_border * 0.4,
+        y_border * 0.7,
         Brushes.Black);
       
       temp += ac.Step.Item1*x_mult;
@@ -384,7 +384,7 @@ begin
         CultureInfo.GetCultureInfo('en-us'),
         FlowDirection.LeftToRight,
         new Typeface('Verdana'),
-        y_border * 0.4,
+        y_border * 0.7,
         Brushes.Black);
     
     temp := origin.Item2;
@@ -404,7 +404,7 @@ begin
         CultureInfo.GetCultureInfo('en-us'),
         FlowDirection.LeftToRight,
         new Typeface('Verdana'),
-        y_border * 0.4,
+        y_border * 0.7,
         Brushes.Black);
       
       temp -= ac.Step.Item2*y_mult;
@@ -439,7 +439,7 @@ begin
   
   if crv.IsFunctional then
   begin
-    var func_step := 0.001;
+    var func_step := (size_x+size_y)/100000;
     var ax := ac.GetAxes;
     var (x_min, x_max) := ax.Get_XLim;
     var (y_min, y_max) := ax.Get_YLim;
@@ -580,12 +580,6 @@ begin
   MainWindow.Height := height+ hp;
   w := width;
   h := height;
-end;
-
-procedure OnMouseMove(sender: object; e: System.Windows.Input.MouseEventArgs);
-begin
-  var p := e.GetPosition(sender as System.Windows.IInputElement);
-  MainWindow.Title := '('+p.X+'; '+p.Y+')';
 end;
 
 function ColorBrush(c: Color) := new SolidColorBrush(c);

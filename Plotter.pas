@@ -7,7 +7,7 @@ uses FigureModule, AxesModule, RendererModule;
 type
   Figure = FigureModule.Figure;
   Axes = AxesModule.Axes;
-
+  Curve = AxesModule.Curve;
 
 ///Создать область отображения графиков
 function GetFigure(): Figure;
