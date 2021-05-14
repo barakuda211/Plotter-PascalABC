@@ -88,10 +88,11 @@ end;
 
 begin
   WindowSize(1280,720);
-
-  test_func_array;
+  //WindowSize(1920,1280);
+  
+  //test_func_array;
   //test_many_arrays;
-  //test_many_funcs;
+  test_many_funcs;
   //test_colors;
   
 end.

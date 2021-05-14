@@ -351,7 +351,8 @@ begin
   
   if crv.IsFunctional then
   begin
-    var func_step := (size_x + size_y) / 100000;
+    //var func_step := (size_x + size_y) / 10000;
+    var func_step := 0.1;
     var ax := ac.GetAxes;
     var (x_min, x_max) := ax.Get_XLim;
     var (y_min, y_max) := ax.Get_YLim;
@@ -361,9 +362,11 @@ begin
     PlotterInvokeVisual(()->
     begin
       var dc_curve := PlotterGetDC;
-      
+  
       var x := x_min;
       var y: real?;
+      var (prev_x, prev_y) :=  (0.0,0.0);
+      
       while (true) do
       begin
         var draw_x := o_x + (x - ac.originxy.Item1) * ac.step.Item1;
@@ -391,8 +394,13 @@ begin
           continue;
         end;
         
-        FillEllipseDC(dc_curve, draw_x, draw_y, 1.0, 1.0, crv.get_facecolor);
+        if (prev_x, prev_y) = (0.0,0.0) then
+          (prev_x, prev_y) := (draw_x, draw_y);
         
+        //FillEllipseDC(dc_curve, draw_x, draw_y, 1.0, 1.0, crv.get_facecolor);
+        LineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.get_facecolor);
+        
+        (prev_x, prev_y) := (draw_x, draw_y);
         x += func_step;
       end;
       dc_curve.Close;  

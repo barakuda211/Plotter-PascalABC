@@ -22,7 +22,7 @@ type Figure = class
     ///инициализация матрицы с заданным размером
     procedure InitAxesMatrix(rows, cols: integer; var am: array [,] of integer);
     ///подстроить размер массива графиков
-    function FitInAxesMatrix(rows, cols, pos: integer): integer;
+    procedure FitInAxesMatrix(rows, cols, pos: integer);
     
     ///возвращает позицию графика в сетке и его размеры
     function SizeOfAxes(id: integer): (integer, integer, integer);
@@ -103,7 +103,7 @@ begin
 end;
 
 //подстроить размер матрицы графиков
-function Figure.FitInAxesMatrix(rows, cols, pos: integer): integer;
+procedure Figure.FitInAxesMatrix(rows, cols, pos: integer);
 begin
   if (axesMatrix.ColCount = cols) and (axesMatrix.RowCount = rows) then
   begin
