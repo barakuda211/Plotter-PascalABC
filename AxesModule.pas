@@ -86,16 +86,18 @@ type Axes = class
     ///пропорциональное отображение по обеим осям
     property EqualProportion: boolean read fEqProp write fEqProp;
     
-    ///Построить линейный график
-    function Plot(f: real ->real; cl: string := 'red'): Curve;
-    ///Построить линейный график
-    function Plot(y: array of real; cl: string := 'red'): Curve;
-    ///Построить линейный график
-    function Plot(x, y: array of real; cl: string := 'red'): Curve;
+    ///Построить линейный график по функции
+    function Plot(f: real ->real; cl: Color := Colors.Red): Curve;
+    ///Построить линейный график по массиву Y
+    function Plot(y: array of real; cl: Color := Colors.Red): Curve;
+    ///Построить линейный график по массивам X и Y
+    function Plot(x, y: array of real; cl: Color := Colors.Red): Curve;
+    ///Построить точечный график 
+    function Scatter(f: real ->real; cl: Color := Colors.Red): Curve;
     ///Построить точечный график
-    function Scatter(y: array of real; cl: string := 'red'): Curve;
+    function Scatter(y: array of real; cl: Color := Colors.Red): Curve;
     ///Построить точечный график
-    function Scatter(x, y: array of real; cl: string := 'red'): Curve;
+    function Scatter(x, y: array of real; cl: Color := Colors.Red): Curve;
     
     ///Задать границы по оси X
     procedure Set_xlim(a, b: real);
@@ -131,37 +133,42 @@ function ColorFromString(cl: string): Color;
 
 implementation
 
-function Axes.Plot(f: real ->real; cl: string): Curve;
+function Axes.Plot(f: real ->real; cl: Color): Curve;
 begin
-  var media_color := ColorFromString(cl);
-  var c: Curve := new Curve(f,CurveType.LineGraph,media_color);
+  var c: Curve := new Curve(f,CurveType.LineGraph,cl);
   curvesList.Add(c);
   fEqProp := true;
   Result := c;
 end;
 
-function Axes.Plot(y: array of real; cl: string): Curve;
+function Axes.Plot(y: array of real; cl: Color): Curve;
 begin
   Result := Plot((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y, cl);
 end;
 
-function Axes.Plot(x, y: array of real; cl: string): Curve;
+function Axes.Plot(x, y: array of real; cl: Color): Curve;
 begin
-  var media_color := ColorFromString(cl);
-  var c := new Curve(x,y,CurveType.LineGraph, media_color);
+  var c := new Curve(x,y,CurveType.LineGraph, cl);
   curvesList.Add(c);
   Result := c;
 end;
 
-function Axes.Scatter(y: array of real; cl: string): Curve;
+function Axes.Scatter(f: real ->real; cl: Color): Curve;
+begin
+  var c: Curve := new Curve(f,CurveType.ScatterGrpah,cl);
+  curvesList.Add(c);
+  fEqProp := true;
+  Result := c;
+end;
+
+function Axes.Scatter(y: array of real; cl: Color): Curve;
 begin
   Result := Scatter((0..y.Length - 1).Select(x -> x * 1.0).ToArray, y,cl);
 end;
 
-function Axes.Scatter(x, y: array of real; cl: string): Curve;
+function Axes.Scatter(x, y: array of real; cl: Color): Curve;
 begin
-  var media_color := ColorFromString(cl);
-  var c: Curve := new Curve(x,y,CurveType.ScatterGrpah,media_color);
+  var c: Curve := new Curve(x,y,CurveType.ScatterGrpah,cl);
   curvesList.Add(c);
   Result := c;
 end;

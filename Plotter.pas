@@ -8,6 +8,8 @@ type
   Figure = FigureModule.Figure;
   Axes = AxesModule.Axes;
   Curve = AxesModule.Curve;
+  Color = System.Windows.Media.Color;
+  Colors = System.Windows.Media.Colors;
 
 ///Создать область отображения графиков
 function GetFigure(): Figure;
