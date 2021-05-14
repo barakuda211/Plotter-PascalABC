@@ -65,7 +65,6 @@ begin
   if (rows*cols-1 < pos) or (pos < 0) then
   begin
     raise new Exception('Ошибка! Некорректная позиция графика.');
-    exit;
   end;
   
   

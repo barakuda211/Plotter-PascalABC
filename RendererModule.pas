@@ -64,18 +64,24 @@ type
     ffield: (real, real);
     fstep: (real, real);
     foriginxy: (real, real);
-    flinewidth: real := 1;  //???
+    flinewidth: real := 1;  
+    ffuncstep : real;
     fnumssize: real;
     fynums: array of real;
     fxnums: array of real;
     faxesmultipliers: (real, real);
     ffoptnums: FontOptions;
     fcountaxesnums: (integer, integer) := (10,10);
+    fmarkersize: real;
+    fptsize: real;
+    fscatterspace: real;
     
     ///Расчёт размера шрифта на осях
     procedure SetNumSize;
     ///Расчёт чисел на осях
     procedure SetNums;
+    ///Расчёт расстояний между точками точечного графика
+    procedure SetSpaces;
     ///Заполнение полей
     procedure Init(x, y, size_x, size_y: real; ax: Axes);
     ///Расчёт множителя для отображения
@@ -108,10 +114,18 @@ type
     property YNums: array of real read fynums;
     ///Возвращает массив чисел оси X
     property XNums: array of real read fxnums;
-    ///Возвращает множитель исел на осях
+    ///Возвращает множитель чисел на осях
     property AxesMultipliers: (real, real) read faxesmultipliers;
     ///Возвращает шрифт для текста
     property GetFontOptions: FontOptions read ffoptnums;
+    ///Возвращает шаг для отрисовки функции
+    property GetFuncStep: real read ffuncstep;
+    ///Возвращает размер маркеров графика
+    property GetMarkerSize: real read fmarkersize;
+    ///Возвращает размер единичного штриха
+    property GetPtSize: real read fptsize;
+    ///Возвращает промежуток по X между метками
+    property GetScatterSpace: real read fscatterspace;
     
     constructor Create(x, y, size_x, size_y: real; ax: Axes);
     begin
@@ -124,11 +138,11 @@ type
         mainDrawing.Children.Add(fcurvesGroups[fcurvesGroups.Count-1]);
       end;
       }
-      
       Init(x, y, size_x, size_y, ax);
       AxesNumberMultiplier;
       SetNums;
       SetNumSize;
+      SetSpaces;
     end;
     
     ///Возвращает значение функции в указанной глобальной позиции
@@ -158,6 +172,8 @@ procedure DrawCoordinates(ac: AxesContainer; fig: Figure);
 ///Отрисовка линейного графика
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
 
+///Отрисовка линейного графика
+procedure DrawScatterGraph(ac: AxesContainer; ind: integer);
 
 implementation
 
@@ -332,7 +348,8 @@ begin
   begin
     var crv := ac.GetAxes.Get_Curves[i];
     case (crv.GetCurveType) of
-      CurveType.LineGraph: DrawLineGraph(ac, i)
+      CurveType.LineGraph: DrawLineGraph(ac, i);
+      CurveType.ScatterGraph: DrawScatterGraph(ac, i);
     end;
   end;
 end;
@@ -340,7 +357,7 @@ end;
 //Отрисовка линейного графика
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
 begin
-  
+  var func_step := ac.GetFuncStep;
   var crv := ac.GetAxes.Get_Curves[ind];
   var o_x := ac.absoluteOrigin.Item1;
   var o_y := ac.absoluteOrigin.Item2;
@@ -351,8 +368,6 @@ begin
   
   if crv.IsFunctional then
   begin
-    //var func_step := (size_x + size_y) / 10000;
-    var func_step := 0.1;
     var ax := ac.GetAxes;
     var (x_min, x_max) := ax.Get_XLim;
     var (y_min, y_max) := ax.Get_YLim;
@@ -396,8 +411,8 @@ begin
         
         if (prev_x, prev_y) = (0.0,0.0) then
           (prev_x, prev_y) := (draw_x, draw_y);
-        
-        //FillEllipseDC(dc_curve, draw_x, draw_y, 1.0, 1.0, crv.get_facecolor);
+
+
         LineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.get_facecolor);
         
         (prev_x, prev_y) := (draw_x, draw_y);
@@ -427,6 +442,84 @@ begin
   end);
 end;
 
+procedure DrawScatterGraph(ac: AxesContainer; ind: integer);
+begin
+  
+  var crv := ac.GetAxes.Get_Curves[ind];
+  var o_x := ac.absoluteOrigin.Item1;
+  var o_y := ac.absoluteOrigin.Item2;
+  
+  var (x_border, y_border) := ac.borders;
+  var (xx, yy) := ac.Position;
+  var (size_x, size_y) := ac.Size;
+  
+  if crv.IsFunctional then
+  begin
+    var func_step := ac.GetScatterSpace;
+    var ax := ac.GetAxes;
+    var (x_min, x_max) := ax.Get_XLim;
+    var (y_min, y_max) := ax.Get_YLim;
+    var (x_bounded, y_bounded) := (ax.is_x_bounded, ax.is_y_bounded);
+    
+    PlotterInvokeVisual(()->
+    begin
+      var dc_curve := PlotterGetDC;
+  
+      var x := x_min;
+      var y: real?;
+      
+      while (true) do
+      begin
+        var draw_x := o_x + (x - ac.originxy.Item1) * ac.step.Item1;
+        
+        if (x_bounded and (x >= x_max))
+            or (draw_x > xx + size_x - x_border) then
+          break;
+        
+        y := crv.GetY(x);
+        if (not y.HasValue) or 
+           (y_bounded and ((y.Value < y_min) or (y.Value > y_max))) then
+        begin
+          x += func_step;
+          continue;
+        end;
+        
+        var draw_y := o_y - (y.Value - ac.originxy.Item2) * ac.step.Item2;
+        
+        //костыль
+        if (draw_x < xx + x_border)  or
+            (draw_y < yy + y_border) or 
+            (draw_y > yy + size_y - y_border) then
+        begin
+          x += func_step;
+          continue;
+        end;
+
+        //LineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.get_facecolor);
+        FillEllipseDC(dc_curve, draw_x, draw_y, ac.GetMarkerSize,ac.GetMarkerSize, crv.get_facecolor);
+        
+        x += func_step;
+      end;
+      dc_curve.Close;  
+    end);
+    exit;
+  end;
+  
+  PlotterInvokeVisual(()->
+  begin
+    var dc_curve := PlotterGetDC;
+    for var i := 1 to crv.X.Length - 1 do
+    begin
+      var x := (crv.X[i] - ac.originxy.Item1) * ac.step.Item1;
+      var y := (crv.Y[i] - ac.originxy.Item2) * ac.step.Item2;
+      //dc_curve.DrawLine(new Pen(ColorBrush(crv.get_facecolor),1.0), Pnt(o_x + x1, o_y - y1), Pnt(o_x + x, o_y - y));
+      //LineDC(dc_curve, o_x + x1, o_y - y1, o_x + x, o_y - y, crv.get_facecolor);
+      FillEllipseDC(dc_curve, o_x+x, o_y-y, ac.GetMarkerSize,ac.GetMarkerSize, crv.get_facecolor);
+    end;
+    dc_curve.Close;
+  end);
+end;
+
 {
 //Возвращает группу кривой индекса i
 function AxesContainer.CurveGroup(i: integer): DrawingGroup;
@@ -444,14 +537,6 @@ begin
   w := width;
   h := height;
 end;
-
-{
-function ColorBrush(c: Color) := new SolidColorBrush(c);
-
-function Rect(x, y, w, h: real) := new System.Windows.Rect(x, y, w, h);
-
-function Pnt(x, y: real) := new Point(x, y);
-}
 
 //////////////////////////////////
 
@@ -474,7 +559,6 @@ begin
   
   Result := (x1, y1);
 end;
-
 
 procedure AxesContainer.SetNumSize;
 begin
@@ -616,6 +700,10 @@ begin
   
   foriginxy := (Floor(min_x) * 1.0, Floor(min_y) * 1.0);
   fstep := (step_x, step_y);
+  ffuncstep := (max_x-min_x)/(field_x*0.8);
+  fmarkersize := min(field_x/100, field_y/100);
+  fptsize := field_x/200;
+  fscatterspace := (max_x-min_x)/min(field_x/(2*fmarkersize),field_y/(2*fmarkersize));
 end;
 
 procedure AxesContainer.AxesNumberMultiplier;
@@ -650,6 +738,10 @@ begin
   end;
   
   faxesmultipliers := (x_mult1 * x_mult2*1.0, y_mult1 * y_mult2*1.0);
+end;
+
+procedure AxesContainer.SetSpaces;
+begin
 end;
 
 

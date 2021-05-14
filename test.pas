@@ -54,12 +54,49 @@ begin
   Show(fig);
 end;
 
+procedure test_many_funcs_scatter(rows: integer := 2; cols: integer := 2);
+begin
+  var fig := new Figure();
+  var cls := new Color[3](Colors.Red,Colors.Green,Colors.Blue);
+  for var i := 0 to rows*cols-1 do
+  begin
+    var ax := fig.AddSubplot(rows,cols,i);
+    for var c := 0 to 2 do
+    begin 
+      var cos_sin := Random(2);
+      var len := Random(2,5);
+      var koef := Random(-10.0,10.0);
+      var crv : Curve;
+      if cos_sin = 1 then
+        crv := ax.Scatter((x: real)->(koef*power(cos(x),len)))
+      else
+        crv := ax.Scatter((x: real)->(koef*power(sin(x),len)));    
+      crv.set_facecolor(cls[c]);
+    end;
+    ax.Grid := true;
+    ax.Set_ylim(-10,10);
+    ax.EqualProportion := true;
+  end;
+  Show(fig);
+end;
+
 procedure test_func_array;
 begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
   ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1));
   ax.Plot((x:real) -> sin(x),Colors.Blue);
+  ax.grid := true;
+  ax.EqualProportion := true;
+  Show(fig);
+end;
+
+procedure test_func_array_scatter;
+begin
+  var fig := new Figure();
+  var ax := fig.AddSubplot();
+  ax.Scatter(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1));
+  ax.Scatter((x:real) -> sin(x),Colors.Blue);
   ax.grid := true;
   ax.EqualProportion := true;
   Show(fig);
@@ -90,9 +127,11 @@ begin
   WindowSize(1280,720);
   //WindowSize(1920,1280);
   
+  //test_many_funcs_scatter;
+  //test_func_array_scatter;
   //test_func_array;
   //test_many_arrays;
-  test_many_funcs;
+  //test_many_funcs;
   //test_colors;
   
 end.

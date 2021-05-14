@@ -8,7 +8,7 @@ interface
 uses System.Windows.Media;
 
 ///типы кривой
-type CurveType = (LineGraph, ScatterGrpah, BarGraph, FillBetweenGraph);
+type CurveType = (LineGraph, ScatterGraph, BarGraph, FillBetweenGraph);
 
 ///класс кривой
 type Curve = class
@@ -20,18 +20,29 @@ type Curve = class
     x_arr: array of real;
     y_arr: array of real;
     facecolor: Color;
+    dash_arr: array of real;
   
   public
-    
+    ///вернуть тип кривой
     property GetCurveType: CurveType read ftype;
+    ///вернуть название кривой
     property Name: string read fname write fname;
+    ///вернуть описание кривой
     property Description: string read fdesc write fdesc;
+    ///вернуть функцию
     property Func: real -> real read ffunc;
+    ///вернуть массив X
     property X: array of real read x_arr;
+    ///вернуть массив Y
     property Y: array of real read y_arr;
+    ///вернуть массив длины промежутков
+    property Dashes: array of real read dash_arr;
+    ///вернуть цвет кривой
+    property get_facecolor: Color read facecolor;
     
     constructor Create(f: real->real; ct: CurveType; cl: Color);
     begin
+      ftype := ct;
       facecolor := cl;
       ffunc := f;
     end;
@@ -41,6 +52,7 @@ type Curve = class
       if (x.Length <> y.Length) then
         raise new Exception('Недостаток введённых данных!');
       
+      ftype := ct;
       facecolor := cl;
       x_arr := x;
       y_arr := y;
@@ -56,9 +68,9 @@ type Curve = class
     procedure set_facecolor(col: Color);
     ///установить цвет кривой строкой
     procedure set_facecolor(col: string);
-    ///вернуть цвет кривой
-    function get_facecolor(): Color;
   
+    ///установить промежутки отрисовки линии графика
+    procedure set_dashes(params arr: array of real);
 end;
 
 ///Класс области рисования
@@ -85,6 +97,18 @@ type Axes = class
     property Grid: boolean read fgrid write fgrid;
     ///пропорциональное отображение по обеим осям
     property EqualProportion: boolean read fEqProp write fEqProp;
+    ///вернуть цвет фона
+    property get_facecolor: Color read facecolor;
+    ///Ограничен ли X
+    property is_x_bounded: boolean read isXBounded;
+    ///Ограничен ли Y
+    property is_y_bounded: boolean read isYBounded;
+    ///Вернуть список кривых
+    property Get_Curves: List<Curve> read curvesList;
+    ///Вернуть границы по оси Х
+    property Get_XLim: (real, real) read Xlim;
+    ///Вернуть границы по оси Y
+    property Get_YLim: (real, real) read Ylim;
     
     ///Построить линейный график по функции
     function Plot(f: real ->real; cl: Color := Colors.Red): Curve;
@@ -108,23 +132,11 @@ type Axes = class
     ///Вывести легенду графика
     procedure Legend();
     
-    ///Вернуть список кривых
-    function Get_Curves(): List<Curve>;
-    ///Вернуть границы по оси Х
-    function Get_XLim(): (real, real);
-    ///Вернуть границы по оси Y
-    function Get_YLim(): (real, real);
-    ///Ограничен ли X
-    function is_x_bounded(): boolean;
-    ///Ограничен ли Y
-    function is_y_bounded(): boolean;
-    
     ///установить цвет фона
     procedure set_facecolor(col: Color);
     ///установить цвет фона строкой
     procedure set_facecolor(col: string);
-    ///вернуть цвет фона
-    function get_facecolor(): Color;
+    
     
 end;
 
@@ -155,7 +167,7 @@ end;
 
 function Axes.Scatter(f: real ->real; cl: Color): Curve;
 begin
-  var c: Curve := new Curve(f,CurveType.ScatterGrpah,cl);
+  var c: Curve := new Curve(f,CurveType.ScatterGraph,cl);
   curvesList.Add(c);
   fEqProp := true;
   Result := c;
@@ -168,7 +180,7 @@ end;
 
 function Axes.Scatter(x, y: array of real; cl: Color): Curve;
 begin
-  var c: Curve := new Curve(x,y,CurveType.ScatterGrpah,cl);
+  var c: Curve := new Curve(x,y,CurveType.ScatterGraph,cl);
   curvesList.Add(c);
   Result := c;
 end;
@@ -197,24 +209,6 @@ begin
   Self.Title := title;
 end;
 
-//Вернуть список кривых
-function Axes.Get_Curves(): List<Curve>;
-begin
-  Result := curvesList;
-end;
-
-//Вернуть границы по оси Х
-function Axes.Get_XLim(): (real, real);
-begin
-   Result := Xlim;
-end;
-
-//Вернуть границы по оси Y
-function Axes.Get_YLim(): (real, real);
-begin
-   Result := Ylim;
-end;
-
 //установить цвет фона
 procedure Axes.set_facecolor(col: Color) := facecolor := col;
 
@@ -222,14 +216,6 @@ procedure Axes.set_facecolor(col: Color) := facecolor := col;
 procedure Axes.set_facecolor(col: string) := 
   facecolor := Color(ColorConverter.ConvertFromString(col));
 
-//вернуть цвет фона
-function Axes.get_facecolor(): Color := facecolor;
-
-//Ограничен ли X
-function Axes.is_x_bounded(): boolean := isxbounded;
-
-//Ограничен ли Y
-function Axes.is_y_bounded(): boolean := isybounded;
 
 
 ///////////////////////////////////////////////////////////////
@@ -270,8 +256,13 @@ procedure Curve.set_facecolor(col: Color) := facecolor := col;
 //установить цвет фона строкой
 procedure Curve.set_facecolor(col: string) := facecolor := ColorFromString(col);
 
-//вернуть цвет фона
-function Curve.get_facecolor(): Color := facecolor;
+
+procedure Curve.set_dashes(params arr: array of real);
+begin
+  if arr.Length < 2 then
+    raise new Exception('Недостаточное кол-во параметров для промежутков.');
+  dash_arr := arr;
+end;
 
 initialization
 
