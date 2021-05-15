@@ -72,9 +72,10 @@ type
     faxesmultipliers: (real, real);
     ffoptnums: FontOptions;
     fcountaxesnums: (integer, integer) := (10,10);
-    fmarkersize: real;
     fptsize: real;
-    fscatterspace: real;
+    fptsizexy: real;
+    fminmaxx: (real, real);
+    fminmaxy: (real, real);
     
     ///Расчёт размера шрифта на осях
     procedure SetNumSize;
@@ -120,12 +121,10 @@ type
     property GetFontOptions: FontOptions read ffoptnums;
     ///Возвращает шаг для отрисовки функции
     property GetFuncStep: real read ffuncstep;
-    ///Возвращает размер маркеров графика
-    property GetMarkerSize: real read fmarkersize;
     ///Возвращает размер единичного штриха
     property GetPtSize: real read fptsize;
-    ///Возвращает промежуток по X между метками
-    property GetScatterSpace: real read fscatterspace;
+    ///Возвращает размер единичного штриха относительно X и Y
+    property GetPtSizeXY: real read fptsizexy;
     
     constructor Create(x, y, size_x, size_y: real; ax: Axes);
     begin
@@ -144,6 +143,14 @@ type
       SetNumSize;
       SetSpaces;
     end;
+    
+    
+    
+    ///Возвращает размер маркеров по индексу кривой
+    function GetMarkerSize(ind: integer): real;
+    
+    ///Возвращает значение промежутков точечного графика по индексу кривой
+    function GetScatterSpace(ind: integer): real;
     
     ///Возвращает значение функции в указанной глобальной позиции
     function GetXYByMouse(x, y: real): (real?, real?);
@@ -448,6 +455,7 @@ begin
   var crv := ac.GetAxes.Get_Curves[ind];
   var o_x := ac.absoluteOrigin.Item1;
   var o_y := ac.absoluteOrigin.Item2;
+  var markersize := ac.GetMarkerSize(ind);
   
   var (x_border, y_border) := ac.borders;
   var (xx, yy) := ac.Position;
@@ -455,7 +463,7 @@ begin
   
   if crv.IsFunctional then
   begin
-    var func_step := ac.GetScatterSpace;
+    var func_step := ac.GetScatterSpace(ind);
     var ax := ac.GetAxes;
     var (x_min, x_max) := ax.Get_XLim;
     var (y_min, y_max) := ax.Get_YLim;
@@ -495,8 +503,7 @@ begin
           continue;
         end;
 
-        //LineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.get_facecolor);
-        FillEllipseDC(dc_curve, draw_x, draw_y, ac.GetMarkerSize,ac.GetMarkerSize, crv.get_facecolor);
+        FillEllipseDC(dc_curve, draw_x, draw_y, markersize, markersize, crv.get_facecolor);
         
         x += func_step;
       end;
@@ -512,9 +519,8 @@ begin
     begin
       var x := (crv.X[i] - ac.originxy.Item1) * ac.step.Item1;
       var y := (crv.Y[i] - ac.originxy.Item2) * ac.step.Item2;
-      //dc_curve.DrawLine(new Pen(ColorBrush(crv.get_facecolor),1.0), Pnt(o_x + x1, o_y - y1), Pnt(o_x + x, o_y - y));
-      //LineDC(dc_curve, o_x + x1, o_y - y1, o_x + x, o_y - y, crv.get_facecolor);
-      FillEllipseDC(dc_curve, o_x+x, o_y-y, ac.GetMarkerSize,ac.GetMarkerSize, crv.get_facecolor);
+
+      FillEllipseDC(dc_curve, o_x+x, o_y-y, markersize, markersize, crv.get_facecolor);
     end;
     dc_curve.Close;
   end);
@@ -701,9 +707,9 @@ begin
   foriginxy := (Floor(min_x) * 1.0, Floor(min_y) * 1.0);
   fstep := (step_x, step_y);
   ffuncstep := (max_x-min_x)/(field_x*0.8);
-  fmarkersize := min(field_x/100, field_y/100);
-  fptsize := field_x/200;
-  fscatterspace := (max_x-min_x)/min(field_x/(2*fmarkersize),field_y/(2*fmarkersize));
+  fptsize := min(field_x, field_y)/200; 
+  fminmaxx := (min_x, max_x);
+  fminmaxy := (min_y, max_y);
 end;
 
 procedure AxesContainer.AxesNumberMultiplier;
@@ -742,6 +748,20 @@ end;
 
 procedure AxesContainer.SetSpaces;
 begin
+end;
+
+function AxesContainer.GetMarkerSize(ind: integer): real;
+begin
+  Result := GetAxes.Get_Curves[ind].get_markersize*GetPtSize;
+end;
+
+function AxesContainer.GetScatterSpace(ind: integer): real;
+begin
+  var (min_x, max_x) := fminmaxx;
+  var (field_x, field_y) := ffield;
+  var markersize := GetMarkerSize(ind);
+  var space := GetAxes.Get_Curves[ind].spacesize*GetPtSize;
+  Result := (max_x-min_x)/min(field_x/(space + markersize),field_y/(space + markersize));
 end;
 
 

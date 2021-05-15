@@ -21,13 +21,15 @@ type Curve = class
     y_arr: array of real;
     facecolor: Color;
     dash_arr: array of real;
-  
+    fmarkersize: real := 2.0;
+    fspacesize: real := 3.0;
+    
   public
     ///вернуть тип кривой
     property GetCurveType: CurveType read ftype;
-    ///вернуть название кривой
+    ///вернуть/задать название кривой
     property Name: string read fname write fname;
-    ///вернуть описание кривой
+    ///вернуть/задать описание кривой
     property Description: string read fdesc write fdesc;
     ///вернуть функцию
     property Func: real -> real read ffunc;
@@ -39,6 +41,11 @@ type Curve = class
     property Dashes: array of real read dash_arr;
     ///вернуть цвет кривой
     property get_facecolor: Color read facecolor;
+    ///вернуть/задать размер маркеров
+    property markersize: real read fmarkersize write fmarkersize;
+    ///вернуть/задать размер промежутков между маркерами
+    property spacesize: real read fspacesize write fspacesize;
+
     
     constructor Create(f: real->real; ct: CurveType; cl: Color);
     begin

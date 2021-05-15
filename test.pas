@@ -96,7 +96,7 @@ begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
   ax.Scatter(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1));
-  ax.Scatter((x:real) -> sin(x),Colors.Blue);
+  var crv := ax.Scatter((x:real) -> sin(x),Colors.Blue);
   ax.grid := true;
   ax.EqualProportion := true;
   Show(fig);
