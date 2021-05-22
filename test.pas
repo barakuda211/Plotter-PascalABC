@@ -1,4 +1,4 @@
-﻿uses Plotter;
+﻿uses GraphWPF,Plotter;
 
 procedure test_many_arrays(rows: integer := 4; cols: integer := 4);
 begin
@@ -84,8 +84,8 @@ procedure test_func_array;
 begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
-  ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1));
-  ax.Plot((x:real) -> sin(x),Colors.Blue);
+  ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1)).line_width := 0.5;
+  ax.Plot((x:real) -> sin(x),Colors.Blue).line_width := 2;
   ax.grid := true;
   ax.EqualProportion := true;
   Show(fig);
@@ -131,7 +131,7 @@ begin
   //test_func_array_scatter;
   //test_func_array;
   //test_many_arrays;
-  //test_many_funcs;
+  test_many_funcs;
   //test_colors;
   
 end.

@@ -23,6 +23,7 @@ type Curve = class
     dash_arr: array of real;
     fmarkersize: real := 2.0;
     fspacesize: real := 3.0;
+    flinewidth: real := 1.0;
     
   public
     ///вернуть тип кривой
@@ -45,6 +46,8 @@ type Curve = class
     property markersize: real read fmarkersize write fmarkersize;
     ///вернуть/задать размер промежутков между маркерами
     property spacesize: real read fspacesize write fspacesize;
+    ///вернуть/задать толщину линии графика
+    property line_width: real read flinewidth write flinewidth;
 
     
     constructor Create(f: real->real; ct: CurveType; cl: Color);
@@ -88,8 +91,9 @@ type Axes = class
     Xlim: (real, real):= (-10.0, 10.0);
     Ylim: (real, real):= (-10.0, 10.0);
     curvesList: List<Curve> := new List<Curve>();
-    
+
     facecolor: Color := Colors.White;
+    
     isXBounded: boolean := false;
     isYBounded: boolean := false;
     fGrid: boolean := false;
