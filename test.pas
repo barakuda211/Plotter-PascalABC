@@ -49,6 +49,7 @@ begin
     end;
     ax.Grid := true;
     ax.Set_ylim(-10,10);
+    ax.Set_legend(Arr('one','two','three'));
     ax.EqualProportion := true;
   end;
   Show(fig);
@@ -87,7 +88,8 @@ begin
   ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1)).line_width := 0.5;
   ax.Plot((x:real) -> sin(x),Colors.Blue).line_width := 2;
   ax.grid := true;
-  ax.EqualProportion := true;
+  ax.EqualProportion := false;
+  ax.Set_legend(Arr('array','func'));
   Show(fig);
 end;
 
@@ -123,15 +125,56 @@ begin
   Show(fig);
 end;
 
+procedure test_long_array;
 begin
-  WindowSize(1280,720);
+  var fig := new Figure();
+  var ax := fig.AddSubplot();
+  var x := new real[1000];
+  var y := new real[1000];
+  x[0] := 0; y[0] := 0;
+  for var i:= 1 to 999 do
+  begin
+    y[i] := Random(0.001,-0.001);
+    x[i] := x[i-1]+0.008;
+  end;
+  ax.Plot(x,y).line_width := 0.2;
+  ax.grid := true;
+  Show(fig);
+end;
+
+procedure test_grid;
+begin
+  var fig := new Figure();
+  var ax := fig.AddSubplot();
+  for var i := -3 to 3 do
+    ax.Scatter(ArrFill(6, i*1.0));
+  ax.grid := true;
+  Show(fig);
+end;
+
+procedure test_bars;
+begin
+  var fig := new Figure();
+  var ax := fig.AddSubplot();
+  var crv := ax.Bar(new real[10](1,2,3,4,5,6,7,8,9,10));
+  crv.set_BarLabels((1..10).Select(x->'bar'+x).ToArray);
+  ax.set_legend(Arr('bars'));
+  ax.grid := true;
+  Show(fig);
+end;
+
+begin
+  //WindowSize(1280,720);
   //WindowSize(1920,1280);
   
   //test_many_funcs_scatter;
   //test_func_array_scatter;
-  //test_func_array;
-  //test_many_arrays;
-  test_many_funcs;
+  test_func_array;
+  //FastDraw(dc->test_many_arrays(10,10));
+  //test_many_funcs(2,2);
   //test_colors;
-  
+  //test_bars;
+  //test_long_array;
+  //test_grid;
+  print(millisecondsdelta);
 end.
