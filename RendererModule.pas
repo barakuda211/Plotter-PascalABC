@@ -368,7 +368,7 @@ begin
           DrawEllipseDC(dc,l_pos.Item1+w*0.25,cur_y+h1/2,h1*0.4,h1*0.4,cl,EmptyColor,0);
         CurveType.LineGraph: 
           DrawLineDC(dc,l_pos.Item1+w*0.1,cur_y+h1/2,l_pos.Item1+w*0.3,cur_y+h1/2,
-                      cl,crv[i].line_width*ac.GetPtSize);
+                      cl,crv[i].linewidth*ac.GetPtSize);
         CurveType.barGraph: 
           DrawRectangleDC(dc,l_pos.Item1+w*0.1,cur_y,w*0.2,h1*0.8,cl,EmptyColor,0);
       end;
@@ -415,16 +415,16 @@ begin
       
       DrawLineDC(dc_bars, o_x + x + width_draw, o_y, o_x + x + width_draw, 
                  o_y + y_border * 0.3, Colors.Black, ac.LineWidth * 0.5);
-      TextOutDC(dc_bars, o_x + x + width_draw - TextWidthPFont(crv.Get_BarLabels[i], 
-                ac.NumsFont) / 2,o_y + y_border * 0.35, crv.Get_BarLabels[i],
+      TextOutDC(dc_bars, o_x + x + width_draw - TextWidthPFont(crv.GetBarLabels[i], 
+                ac.NumsFont) / 2,o_y + y_border * 0.35, crv.GetBarLabels[i],
                 Alignment.LeftTop, 0, ac.NumsFont);
       
       if (crv.Y[i] > 0) then
         DrawRectangleDC(dc_bars, o_x + x, null_y - h, crv.width * ac.Step.Item1,
-                        h, crv.GetFacecolor, Colors.Black, crv.line_width * 0.5)
+                        h, crv.GetFacecolor, Colors.Black, crv.linewidth * 0.5)
       else
         DrawRectangleDC(dc_bars, o_x + x, null_y, crv.width * ac.Step.Item1,
-                        h, crv.GetFacecolor, Colors.Black, crv.line_width * 0.5);
+                        h, crv.GetFacecolor, Colors.Black, crv.linewidth * 0.5);
       
     end;
   end);
@@ -488,7 +488,7 @@ begin
         
         
         DrawLineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.GetFacecolor,
-                    crv.line_width * ac.GetPtSize);
+                    crv.linewidth * ac.GetPtSize);
         
         (prev_x, prev_y) := (draw_x, draw_y);
         x += func_step;
@@ -507,7 +507,7 @@ begin
       var x := (crv.X[i] - ac.originxy.Item1) * ac.step.Item1;
       var y := (crv.Y[i] - ac.originxy.Item2) * ac.step.Item2;
       DrawLineDC(dc_curve, o_x + x1, o_y - y1, o_x + x, o_y - y, crv.GetFacecolor, 
-                  crv.line_width * ac.GetPtSize);
+                  crv.linewidth * ac.GetPtSize);
       (x1, y1) := (x, y);
     end;
   end);
@@ -785,8 +785,8 @@ begin
     
     if curve.GetCurveType = CurveType.BarGraph then
     begin
-      if curve.Get_BarLabels <> nil then
-        fbarlabels := curve.Get_BarLabels;
+      if curve.GetBarLabels <> nil then
+        fbarlabels := curve.GetBarLabels;
       if (curve.X[0] - curve.width / 2 < min_x) then
         min_x := curve.X[0] - curve.width / 2;
       if (curve.X[curve.X.Length - 1] + curve.width / 2 > max_x) then

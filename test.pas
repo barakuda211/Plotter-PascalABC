@@ -88,8 +88,8 @@ procedure test_func_array;
 begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
-  ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1)).line_width := 0.5;
-  ax.Plot((x:real) -> sin(x),Colors.Blue).line_width := 2;
+  ax.Plot(new real[10](1,5,2.3,-3,-3.8,0,3,5,1.8,1)).linewidth := 0.5;
+  ax.Plot((x:real) -> sin(x),Colors.Blue).linewidth := 2;
   ax.grid := true;
   ax.EqualProportion := false;
   ax.SetLegend(Arr('array','func'));
@@ -144,7 +144,7 @@ begin
     y[i] := Random(0.001,-0.001);
     x[i] := x[i-1]+0.008;
   end;
-  ax.Plot(x,y).line_width := 0.2;
+  ax.Plot(x,y).linewidth := 0.2;
   ax.grid := true;
   ax.Title := 'Test long array';
   Show(fig);
@@ -166,7 +166,7 @@ begin
   var fig := new Figure();
   var ax := fig.AddSubplot();
   var crv := ax.Bar(new real[10](1,2,3,4,5,6,7,8,9,10));
-  crv.set_BarLabels((1..10).Select(x->'bar'+x).ToArray);
+  crv.SetBarLabels((1..10).Select(x->'bar'+x).ToArray);
   ax.Title := 'Test bars';
   Show(fig);
 end;

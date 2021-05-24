@@ -38,8 +38,6 @@ begin
   Result := (fig, fig.GetAxes);
 end;
 
-
-
 procedure WindowSize(width, height: integer);
 begin
   RendererModule.WindowSize(width, height);
@@ -55,7 +53,5 @@ end;
 initialization
 
 finalization
-
-//раздел финализации
 
 end. 

@@ -26,7 +26,6 @@ type Figure = class
     
     ///возвращает позицию графика в сетке и его размеры
     function SizeOfAxes(id: integer): (integer, integer, integer);
-  
     function NOD(x, y:integer): integer;
     function NOK(x, y:integer): integer;
   
@@ -40,17 +39,17 @@ type Figure = class
   
     ///Добавить график
     function AddSubplot(): Axes;
-    ///Добавить график
+    ///добавляет график в сетку rows x cols в позицию с индексом pos
     function AddSubplot(rows, cols, pos: integer): Axes;
     ///Вернуть двумерный массив индексов графиков окна
     function GetAxesMatrix(): array [,] of integer;
     ///Вернуть список графиков окна
     function GetAxes(): List<Axes>;
+    ///вернуть цвет фона
+    function GetFacecolor(): Color;
     
     ///установить цвет фона
     procedure SetFacecolor(col: Color);
-    ///вернуть цвет фона
-    function GetFacecolor(): Color;
   
   end;
 
@@ -157,7 +156,6 @@ begin
   
 end;
 
-//возвращает позицию графика в сетке и его размеры
 function Figure.SizeOfAxes(id: integer): (integer, integer, integer);
 begin
   var x,y,pos: integer;
@@ -193,10 +191,8 @@ begin
   Result := (pos, size_x, size_y);
 end;
 
-//установить цвет фона
 procedure Figure.SetFacecolor(col: Color) := facecolor := col;
 
-//вернуть цвет фона
 function Figure.GetFacecolor(): Color := facecolor;
 
 function Figure.NOD(x, y:integer): integer;

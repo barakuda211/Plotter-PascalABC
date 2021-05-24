@@ -16,13 +16,11 @@ type
   Curve = class
   private
     fname: string;
-    fdesc: string;
     ffunc: real-> real;
     ftype: CurveType;
     x_arr: array of real;
     y_arr: array of real;
     facecolor: Color;
-    dash_arr: array of real;
     fmarkersize: real := 2.0;
     fspacesize: real := 3.0;
     flinewidth: real := 1.0;
@@ -34,28 +32,24 @@ type
     property GetCurveType: CurveType read ftype;
     ///вернуть/задать название кривой
     property Name: string read fname write fname;
-    ///вернуть/задать описание кривой
-    property Description: string read fdesc write fdesc;
     ///вернуть функцию
     property Func: real-> real read ffunc;
     ///вернуть массив X
     property X: array of real read x_arr;
     ///вернуть массив Y
     property Y: array of real read y_arr;
-    ///вернуть массив длины промежутков
-    property Dashes: array of real read dash_arr;
     ///вернуть цвет кривой
     property GetFacecolor: Color read facecolor;
     ///вернуть/задать размер маркеров
-    property markersize: real read fmarkersize write fmarkersize;
+    property MarkerSize: real read fmarkersize write fmarkersize;
     ///вернуть/задать размер промежутков между маркерами
-    property spacesize: real read fspacesize write fspacesize;
+    property SpaceSize: real read fspacesize write fspacesize;
     ///вернуть/задать толщину линии графика
-    property line_width: real read flinewidth write flinewidth;
+    property LineWidth: real read flinewidth write flinewidth;
     ///вернуть/задать ширину столбцов
-    property width: real read fbarwidth write fbarwidth;
+    property Width: real read fbarwidth write fbarwidth;
     ///вернуть подписи столбцов
-    property Get_BarLabels: array of string read fbarlabels;
+    property GetBarLabels: array of string read fbarlabels;
     
     constructor Create(f: real-> real; ct: CurveType; cl: Color);
     begin
@@ -92,13 +86,8 @@ type
     
     ///установить цвет кривой
     procedure SetFacecolor(col: Color);
-    ///установить цвет кривой строкой
-    procedure SetFacecolor(col: string);
     ///установить подписи столбцов
-    procedure set_BarLabels(labels: array of string);
-    
-    ///установить промежутки отрисовки линии графика
-    procedure SetDashes(params arr: array of real);
+    procedure SetBarLabels(labels: array of string);
   end;
 
 ///Класс области рисования
@@ -172,13 +161,9 @@ type
     ///Задать границы по оси Y
     procedure SetYLim(a, b: real);
     ///Задать легенду графика
-    procedure SetLegend(legend: array of string);
-    
+    procedure SetLegend(legend: array of string); 
     ///установить цвет фона
     procedure SetFacecolor(col: Color);
-    ///установить цвет фона строкой
-    procedure SetFacecolor(col: string);
-  
   
   end;
 
@@ -282,14 +267,8 @@ end;
 
 procedure Axes.SetFacecolor(col: Color) := facecolor := col;
 
-procedure Axes.SetFacecolor(col: string) := 
-facecolor := Color(ColorConverter.ConvertFromString(col));
-
-
-
 ///////////////////////////////////////////////////////////////
 
-//возвращает значение функции в точке
 function Curve.GetY(x: real): real?;
 begin
   if func <> nil then
@@ -320,17 +299,7 @@ function Curve.IsFunctional(): boolean := x_arr = nil;
 
 procedure Curve.SetFacecolor(col: Color) := facecolor := col;
 
-procedure Curve.SetFacecolor(col: string) := facecolor := ColorFromString(col);
-
-procedure Curve.SetDashes(params arr: array of real);
-begin
-  if arr.Length < 2 then
-    raise new Exception('Недостаточное кол-во параметров для промежутков.');
-  dash_arr := arr;
-end;
-
-
-procedure Curve.set_BarLabels(labels: array of string);
+procedure Curve.SetBarLabels(labels: array of string);
 begin
   if isfunctional or (labels = nil) or 
      (x_arr = nil) or (x_arr.Length <> labels.Length) then
