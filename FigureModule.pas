@@ -48,11 +48,9 @@ type Figure = class
     function GetAxes(): List<Axes>;
     
     ///установить цвет фона
-    procedure set_facecolor(col: Color);
-    ///установить цвет фона строкой
-    procedure set_facecolor(col: string);
+    procedure SetFacecolor(col: Color);
     ///вернуть цвет фона
-    function get_facecolor(): Color;
+    function GetFacecolor(): Color;
   
   end;
 
@@ -196,14 +194,10 @@ begin
 end;
 
 //установить цвет фона
-procedure Figure.set_facecolor(col: Color) := facecolor := col;
-
-//установить цвет фона строкой
-procedure Figure.set_facecolor(col: string) := 
-  facecolor := Color(ColorConverter.ConvertFromString(col));
+procedure Figure.SetFacecolor(col: Color) := facecolor := col;
 
 //вернуть цвет фона
-function Figure.get_facecolor(): Color := facecolor;
+function Figure.GetFacecolor(): Color := facecolor;
 
 function Figure.NOD(x, y:integer): integer;
 begin

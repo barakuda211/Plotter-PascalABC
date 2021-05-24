@@ -45,7 +45,7 @@ type
     ///вернуть массив длины промежутков
     property Dashes: array of real read dash_arr;
     ///вернуть цвет кривой
-    property get_facecolor: Color read facecolor;
+    property GetFacecolor: Color read facecolor;
     ///вернуть/задать размер маркеров
     property markersize: real read fmarkersize write fmarkersize;
     ///вернуть/задать размер промежутков между маркерами
@@ -91,14 +91,14 @@ type
     function HasName(): boolean;
     
     ///установить цвет кривой
-    procedure set_facecolor(col: Color);
+    procedure SetFacecolor(col: Color);
     ///установить цвет кривой строкой
-    procedure set_facecolor(col: string);
+    procedure SetFacecolor(col: string);
     ///установить подписи столбцов
     procedure set_BarLabels(labels: array of string);
     
     ///установить промежутки отрисовки линии графика
-    procedure set_dashes(params arr: array of real);
+    procedure SetDashes(params arr: array of real);
   end;
 
 ///Класс области рисования
@@ -106,18 +106,19 @@ type
   Axes = class
   
   private
-    Title: string := '';
     Xlim: (real, real) := (-10.0, 10.0);
     Ylim: (real, real) := (-10.0, 10.0);
     curvesList: List<Curve> := new List<Curve>();
     
     facecolor: Color := Colors.White;
     
-    isXBounded: boolean := false;
-    isYBounded: boolean := false;
+    fisXBounded: boolean := false;
+    fisYBounded: boolean := false;
     fGrid: boolean := false;
     fEqProp: boolean := false;
     flegend: boolean;
+    ftitle: string;
+    ftrackmouse: boolean := true;
     
     function checkX(x: array of real): boolean;
   
@@ -126,24 +127,28 @@ type
     begin
     end;
     
+    ///Вернуть/задать название координатной области
+    property Title: string read ftitle write ftitle;
     ///Отображение координатной сетки
     property Grid: boolean read fgrid write fgrid;
     ///пропорциональное отображение по обеим осям
     property EqualProportion: boolean read fEqProp write fEqProp;
     ///вернуть цвет фона
-    property get_facecolor: Color read facecolor;
+    property GetFacecolor: Color read facecolor;
     ///Ограничен ли X
-    property is_x_bounded: boolean read isXBounded;
+    property IsXBounded: boolean read fisXBounded;
     ///Ограничен ли Y
-    property is_y_bounded: boolean read isYBounded;
+    property IsYBounded: boolean read fisYBounded;
     ///Вернуть список кривых
-    property Get_Curves: List<Curve> read curvesList;
+    property GetCurves: List<Curve> read curvesList;
     ///Вернуть границы по оси Х
-    property Get_XLim: (real, real) read Xlim;
+    property GetXLim: (real, real) read Xlim;
     ///Вернуть границы по оси Y
-    property Get_YLim: (real, real) read Ylim;
+    property GetYLim: (real, real) read Ylim;
     ///Отображение легенды
     property NeedLegend: boolean read flegend write flegend;
+    ///Отображение текущей позиции курсора мыши в координатах графика
+    property TrackMouse: boolean read ftrackmouse write ftrackmouse;
     
     ///Построить линейный график по функции
     function Plot(f: real-> real; cl: Color := Colors.Red): Curve;
@@ -163,18 +168,16 @@ type
     function Bar(x, y: array of real; cl: Color := Colors.Red): Curve;
     
     ///Задать границы по оси X
-    procedure Set_xlim(a, b: real);
+    procedure SetXLim(a, b: real);
     ///Задать границы по оси Y
-    procedure Set_ylim(a, b: real);
-    ///Задать название графика
-    procedure Set_title(title: string);
+    procedure SetYLim(a, b: real);
     ///Задать легенду графика
-    procedure Set_legend(legend: array of string);
+    procedure SetLegend(legend: array of string);
     
     ///установить цвет фона
-    procedure set_facecolor(col: Color);
+    procedure SetFacecolor(col: Color);
     ///установить цвет фона строкой
-    procedure set_facecolor(col: string);
+    procedure SetFacecolor(col: string);
   
   
   end;
@@ -240,22 +243,18 @@ begin
 end;
 
 
-procedure Axes.Set_xlim(a, b: real);
+procedure Axes.SetXLim(a, b: real);
 begin
-  Self.isxbounded := true;
+  Self.fisxbounded := true;
   Self.Xlim := (a, b);
 end;
 
-procedure Axes.Set_ylim(a, b: real);
+procedure Axes.SetYLim(a, b: real);
 begin
-  Self.isybounded := true;
+  Self.fisybounded := true;
   Self.Ylim := (a, b);
 end;
 
-procedure Axes.Set_title(title: string);
-begin
-  Self.Title := title;
-end;
 
 function Axes.checkX(x: array of real): boolean;
 begin
@@ -272,18 +271,18 @@ begin
   Result := true;
 end;
 
-procedure Axes.Set_legend(legend: array of string);
+procedure Axes.SetLegend(legend: array of string);
 begin
   if (legend = nil) or (legend.length <> curvesList.Count) then
     raise new Exception('Ошибочные входные параметры!');
-  for var i := 0 to legend.Length-1 do
+  for var i := 0 to legend.Length - 1 do
     curvesList[i].Name := legend[i];
   flegend := true;
 end;
 
-procedure Axes.set_facecolor(col: Color) := facecolor := col;
+procedure Axes.SetFacecolor(col: Color) := facecolor := col;
 
-procedure Axes.set_facecolor(col: string) := 
+procedure Axes.SetFacecolor(col: string) := 
 facecolor := Color(ColorConverter.ConvertFromString(col));
 
 
@@ -319,16 +318,17 @@ function ColorFromString(cl: string) := Color(ColorConverter.ConvertFromString(c
 
 function Curve.IsFunctional(): boolean := x_arr = nil;
 
-procedure Curve.set_facecolor(col: Color) := facecolor := col;
+procedure Curve.SetFacecolor(col: Color) := facecolor := col;
 
-procedure Curve.set_facecolor(col: string) := facecolor := ColorFromString(col);
+procedure Curve.SetFacecolor(col: string) := facecolor := ColorFromString(col);
 
-procedure Curve.set_dashes(params arr: array of real);
+procedure Curve.SetDashes(params arr: array of real);
 begin
   if arr.Length < 2 then
     raise new Exception('Недостаточное кол-во параметров для промежутков.');
   dash_arr := arr;
 end;
+
 
 procedure Curve.set_BarLabels(labels: array of string);
 begin
@@ -338,7 +338,8 @@ begin
   fbarlabels := labels;
 end;
 
-function Curve.HasName():boolean := fname <> nil;
+function Curve.HasName(): boolean := (fname <> nil) and (fname.Length > 0);
+
 
 initialization
 

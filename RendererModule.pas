@@ -46,6 +46,7 @@ type
     fminmaxy: (real, real);
     fnumsfont: FontOptions;
     fbarlabels: array of string;
+    fclearablesize: (real, real);
     
     ///Расчёт размера шрифта на осях
     procedure SetNumSize;
@@ -105,6 +106,9 @@ type
     property GetPtSizeXY: real read fptsizexy;
     ///Возвращает подписи столбцов, если заданы
     property GetBarLabels: array of string read fbarlabels;
+    ///Возвращает/задаёт размеры правого верхнего угла для зачистки
+    property ClearableSize: (real,real )read fclearablesize write fclearablesize;
+    
     
     constructor Create(x, y, size_x, size_y: real; ax: Axes);
     begin
@@ -123,8 +127,8 @@ type
     ///Возвращает значение промежутков точечного графика по индексу кривой
     function GetScatterSpace(ind: integer): real;
     
-    ///Возвращает значение функции в указанной глобальной позиции
-    function GetXYByMouse(x, y: real): (real?, real?);
+    ///Запускает метод отрисовки, если на контенер наведена мышка
+    procedure StartPositionDraw(x, y: real; mousebutton: integer);
   
   end;
 
@@ -147,6 +151,8 @@ procedure DrawCurves(ac: AxesContainer);
 procedure DrawCoordinates(ac: AxesContainer; fig: Figure);
 ///Отисовка легенды графика
 procedure DrawLegend(ac: AxesContainer);
+///Отисовка поизиции мыши на графике
+procedure DrawMousePosition(ac: AxesContainer; x,y: real);
 ///Отрисовка линейного графика
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
 ///Отрисовка линейного графика
@@ -168,8 +174,8 @@ begin
   fig := f;
   w := GraphWindow.Width;
   h := GraphWindow.Height;
-  
-  FastDraw(dc -> DrawRectangleDC(dc, 0, 0, w, h, EmptyColor, fig.get_facecolor, 1.0));
+
+  FastDraw(dc -> DrawRectangleDC(dc, 0, 0, w, h, fig.GetFacecolor, EmptyColor, 1.0));
   
   var axes_x_size := ((w - Borders.Item1) / fig.GetAxesMatrix.ColCount) - Borders.Item1;
   var axes_y_size := ((h - Borders.Item2) / fig.GetAxesMatrix.RowCount) - Borders.Item2;
@@ -211,24 +217,26 @@ begin
       y += 1;
       count_y += 1;
     end;
-    
-    
-    
+
     DrawAxes(col, row, (axes_x_size * count_x) + (Borders.Item1 * (count_x - 1)),
                       (axes_y_size * count_y) + (Borders.Item2 * (count_y - 1)),
-                        fig.GetAxes[k], fig);
-    
+                        fig.GetAxes[k], fig);   
   end;
+
 end;
 
 procedure DrawAxes(x, y, size_x, size_y: real; ax: Axes; fig: Figure);
 begin
   var ax_cont := new AxesContainer(x, y, size_x, size_y, ax); 
+
   AxContList.Add(ax_cont);
   
   DrawCoordinates(ax_cont, fig);
   DrawCurves(ax_cont);
   DrawLegend(ax_cont);
+  
+  if ax.TrackMouse then
+    OnMouseMove += ax_cont.StartPositionDraw;
 end;
 
 procedure DrawCoordinates(ac: AxesContainer; fig: Figure);
@@ -240,15 +248,27 @@ begin
   var (size_x, size_y) := ac.Size;
   var(x_mult, y_mult) := ac.AxesMultipliers;
   
-  Font := ac.GetFontOptions;
   
   FastDraw(dc_ax ->
   begin
     //Область рисования Figure(совпадает по цвету с фоном)
-    DrawRectangleDC(dc_ax, x, y, size_x, size_y, fig.get_facecolor, EmptyColor, ac.LineWidth * 0.8);
+    DrawRectangleDC(dc_ax, x, y, size_x, size_y, fig.GetFacecolor, EmptyColor, 
+                      ac.LineWidth * 0.8);
+    var fnt := ac.NumsFont;
+    
+    if (ac.GetAxes.Title <> nil) and (ac.GetAxes.Title.Length > 0) then
+    begin
+      fnt := GetFontSizeByH(y_border,ac.GetAxes.Title);
+      var w :=TextWidthPFont(ac.GetAxes.Title,fnt);
+      ac.ClearableSize := (size_x/2 - w/2, y_border*0.9);
+      TextoutDC(dc_ax,x+size_x/2-w/2,y,ac.GetAxes.Title,Alignment.LeftTop,0,fnt);
+    end;
+    
+    fnt := ac.NumsFont;
     
     //Область рисования для Axes
-    DrawRectangleDC(dc_ax, ac.AbsoluteOrigin.Item1, ac.AbsoluteOrigin.Item2 - field_y, field_x, field_y, ac.GetAxes.get_facecolor, Colors.Black, ac.LineWidth * 0.5);
+    DrawRectangleDC(dc_ax, ac.AbsoluteOrigin.Item1, ac.AbsoluteOrigin.Item2 - field_y, 
+                    field_x, field_y, ac.GetAxes.GetFacecolor, Colors.Black, ac.LineWidth * 0.5);
     
     //отрисовка чёрточек и сетки
     var temp := origin.Item1 + (ac.Xnums[0] - ac.originxy.Item1) * ac.Step.Item1;
@@ -260,14 +280,15 @@ begin
       begin
         DrawLineDC(dc_ax, x + temp, y + origin.Item2, x + temp, y + origin.Item2 + y_border * 0.3, 
                     Colors.Black, ac.LineWidth * 0.5);
-        TextOutDC(dc_ax, x + temp - TextWidthPFont('' + ac.XNums[i], ac.NumsFont) / 2, 
+        TextOutDC(dc_ax, x + temp - TextWidthPFont('' + ac.XNums[i], fnt) / 2, 
                   y + origin.Item2 + y_border * 0.35,
-                  ac.XNums[i].ToString, Alignment.LeftTop, 0, ac.NumsFont);
+                  ac.XNums[i].ToString, Alignment.LeftTop, 0, fnt);
       end;
       
       //сетка
       if ac.GetAxes.grid then
-        DrawLineDC(dc_ax, x + temp, y + origin.Item2, x + temp, y + y_border, Colors.Gray, ac.LineWidth * 0.5);
+        DrawLineDC(dc_ax, x + temp, y + origin.Item2, x + temp, y + y_border, 
+                    Colors.Gray, ac.LineWidth * 0.5);
       
       
       temp += ac.Step.Item1 * x_mult;
@@ -278,14 +299,16 @@ begin
     begin
       if temp < y_border then
         break;
-      DrawLineDC(dc_ax, x + origin.Item1, y + temp, x + origin.Item1 - x_border * 0.3, y + temp, Colors.Black, ac.LineWidth * 0.5);
-      TextOutDC(dc_ax, x + origin.Item1 - x_border * 0.4 - TextWidthPFont('' + ac.YNums[i], ac.NumsFont), 
-                  y + temp - TextHeightPFont('' + ac.YNums[i], ac.NumsFont) / 2, 
-                  ac.YNums[i].ToString(), Alignment.LeftTop, 0, ac.NumsFont);
+      DrawLineDC(dc_ax, x + origin.Item1, y + temp, x + origin.Item1 - x_border * 0.3, 
+                  y + temp, Colors.Black, ac.LineWidth * 0.5);
+      TextOutDC(dc_ax, x + origin.Item1 - x_border * 0.4 - TextWidthPFont('' + ac.YNums[i], fnt), 
+                  y + temp - TextHeightPFont('' + ac.YNums[i], fnt) / 2, 
+                  ac.YNums[i].ToString(), Alignment.LeftTop, 0, fnt);
       
       //сетка
       if ac.GetAxes.grid then
-        DrawLineDC(dc_ax, x + origin.Item1, y + temp, x + x_border + field_x, y + temp, Colors.Gray, ac.LineWidth * 0.5);
+        DrawLineDC(dc_ax, x + origin.Item1, y + temp, x + x_border + field_x, y + temp, 
+                    Colors.Gray, ac.LineWidth * 0.5);
       
       temp -= ac.Step.Item2 * y_mult;
     end;
@@ -295,7 +318,7 @@ end;
 
 procedure DrawLegend(ac: AxesContainer);
 begin
-  if not ac.GetAxes.NeedLegend then
+  if (not ac.GetAxes.NeedLegend) then
     exit;
   
   var (field_x, field_y) := ac.fieldsize;
@@ -304,18 +327,20 @@ begin
   var (x, y) := ac.Position;
   var (size_x, size_y) := ac.Size;
   var(x_mult, y_mult) := ac.AxesMultipliers;
-  var crv := ac.GetAxes.Get_Curves;
-  
-  Font := ac.GetFontOptions;
+  var crv := ac.GetAxes.GetCurves;
   
   var with_names := new List<integer>;
   for var i := 0 to crv.Count-1 do
     if crv[i].HasName then
       with_names.Add(i);
   
+  if with_names.Count = 0 then
+    exit;
+  
   var h := field_y/5;
   var w := field_x/5;
-  var fnt := ac.NumsFont;
+  var fnt := new FontOptions;
+  fnt.Size := ac.NumsFont.Size;
   var split := h*0.05;
   var h1 := (h-split*with_names.Count)/with_names.Count;
   
@@ -337,16 +362,16 @@ begin
     var cl: Color;
     foreach var i in with_names do
     begin
-      cl := crv[i].get_facecolor;
+      cl := crv[i].GetFacecolor;
       case (crv[i].GetCurveType) of
         CurveType.ScatterGraph: 
-          DrawEllipseDC(dc,l_pos.Item1+w*0.25,cur_y+h1/2,w*0.1,w*0.1,cl,EmptyColor,0);
+          DrawEllipseDC(dc,l_pos.Item1+w*0.25,cur_y+h1/2,h1*0.4,h1*0.4,cl,EmptyColor,0);
         CurveType.LineGraph: 
-          DrawLineDC(dc,l_pos.Item1+w*0.1,cur_y+h1/2,l_pos.Item1+w*0.3,cur_y+h1/2,cl,crv[i].line_width*ac.GetPtSize);
+          DrawLineDC(dc,l_pos.Item1+w*0.1,cur_y+h1/2,l_pos.Item1+w*0.3,cur_y+h1/2,
+                      cl,crv[i].line_width*ac.GetPtSize);
         CurveType.barGraph: 
           DrawRectangleDC(dc,l_pos.Item1+w*0.1,cur_y,w*0.2,h1*0.8,cl,EmptyColor,0);
       end;
-      //TextOutDC(dc,l_pos.Item1+w*0.4,cur_y,crv[i].Name,Alignment.LeftTop,0,fnt);
       DrawTextDC(dc,l_pos.Item1+w*0.4,cur_y,w*0.6,h1,crv[i].Name,alignment.LeftCenter,0,fnt);
       cur_y += h1+split;
     end;
@@ -356,9 +381,9 @@ end;
 
 procedure DrawCurves(ac: AxesContainer);
 begin
-  for var i := 0 to ac.GetAxes.Get_Curves.Count - 1 do
+  for var i := 0 to ac.GetAxes.GetCurves.Count - 1 do
   begin
-    var crv := ac.GetAxes.Get_Curves[i];
+    var crv := ac.GetAxes.GetCurves[i];
     case (crv.GetCurveType) of
       CurveType.LineGraph: DrawLineGraph(ac, i);
       CurveType.ScatterGraph: DrawScatterGraph(ac, i);
@@ -369,7 +394,7 @@ end;
 
 procedure DrawBarGraph(ac: AxesContainer; ind: integer);
 begin
-  var crv := ac.GetAxes.Get_Curves[ind];
+  var crv := ac.GetAxes.GetCurves[ind];
   var o_x := ac.absoluteOrigin.Item1;
   var o_y := ac.absoluteOrigin.Item2;
   var markersize := ac.GetMarkerSize(ind);
@@ -390,16 +415,16 @@ begin
       
       DrawLineDC(dc_bars, o_x + x + width_draw, o_y, o_x + x + width_draw, 
                  o_y + y_border * 0.3, Colors.Black, ac.LineWidth * 0.5);
-      TextOutDC(dc_bars, o_x + x + width_draw - TextWidthPFont(crv.Get_BarLabels[i], ac.NumsFont) / 2, 
-                  o_y + y_border * 0.35, crv.Get_BarLabels[i],
-                  Alignment.LeftTop, 0, ac.NumsFont);
+      TextOutDC(dc_bars, o_x + x + width_draw - TextWidthPFont(crv.Get_BarLabels[i], 
+                ac.NumsFont) / 2,o_y + y_border * 0.35, crv.Get_BarLabels[i],
+                Alignment.LeftTop, 0, ac.NumsFont);
       
       if (crv.Y[i] > 0) then
         DrawRectangleDC(dc_bars, o_x + x, null_y - h, crv.width * ac.Step.Item1,
-                        h, crv.get_facecolor, Colors.Black, crv.line_width * 0.5)
+                        h, crv.GetFacecolor, Colors.Black, crv.line_width * 0.5)
       else
         DrawRectangleDC(dc_bars, o_x + x, null_y, crv.width * ac.Step.Item1,
-                        h, crv.get_facecolor, Colors.Black, crv.line_width * 0.5);
+                        h, crv.GetFacecolor, Colors.Black, crv.line_width * 0.5);
       
     end;
   end);
@@ -408,7 +433,7 @@ end;
 procedure DrawLineGraph(ac: AxesContainer; ind: integer);
 begin
   var func_step := ac.GetFuncStep;
-  var crv := ac.GetAxes.Get_Curves[ind];
+  var crv := ac.GetAxes.GetCurves[ind];
   var o_x := ac.absoluteOrigin.Item1;
   var o_y := ac.absoluteOrigin.Item2;
   
@@ -419,9 +444,9 @@ begin
   if crv.IsFunctional then
   begin
     var ax := ac.GetAxes;
-    var (x_min, x_max) := ax.Get_XLim;
-    var (y_min, y_max) := ax.Get_YLim;
-    var (x_bounded, y_bounded) := (ax.is_x_bounded, ax.is_y_bounded);
+    var (x_min, x_max) := ax.GetXLim;
+    var (y_min, y_max) := ax.GetYLim;
+    var (x_bounded, y_bounded) := (ax.isxbounded, ax.isybounded);
     
     
     FastDraw(dc_curve ->
@@ -450,7 +475,6 @@ begin
         
         var draw_y := o_y - (y.Value - ac.originxy.Item2) * ac.step.Item2;
         
-        //костыль
         if (draw_x < xx + x_border)  or
             (draw_y < yy + y_border) or 
             (draw_y > yy + size_y - y_border) then
@@ -463,7 +487,7 @@ begin
           (prev_x, prev_y) := (draw_x, draw_y);
         
         
-        DrawLineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.get_facecolor,
+        DrawLineDC(dc_curve, prev_x, prev_y, draw_x, draw_y, crv.GetFacecolor,
                     crv.line_width * ac.GetPtSize);
         
         (prev_x, prev_y) := (draw_x, draw_y);
@@ -482,8 +506,7 @@ begin
     begin
       var x := (crv.X[i] - ac.originxy.Item1) * ac.step.Item1;
       var y := (crv.Y[i] - ac.originxy.Item2) * ac.step.Item2;
-      //LineDC(dc_curve, o_x + x1, o_y - y1, o_x + x, o_y - y, crv.get_facecolor);
-      DrawLineDC(dc_curve, o_x + x1, o_y - y1, o_x + x, o_y - y, crv.get_facecolor, 
+      DrawLineDC(dc_curve, o_x + x1, o_y - y1, o_x + x, o_y - y, crv.GetFacecolor, 
                   crv.line_width * ac.GetPtSize);
       (x1, y1) := (x, y);
     end;
@@ -493,7 +516,7 @@ end;
 procedure DrawScatterGraph(ac: AxesContainer; ind: integer);
 begin
   
-  var crv := ac.GetAxes.Get_Curves[ind];
+  var crv := ac.GetAxes.GetCurves[ind];
   var o_x := ac.absoluteOrigin.Item1;
   var o_y := ac.absoluteOrigin.Item2;
   var markersize := ac.GetMarkerSize(ind);
@@ -506,9 +529,9 @@ begin
   begin
     var func_step := ac.GetScatterSpace(ind);
     var ax := ac.GetAxes;
-    var (x_min, x_max) := ax.Get_XLim;
-    var (y_min, y_max) := ax.Get_YLim;
-    var (x_bounded, y_bounded) := (ax.is_x_bounded, ax.is_y_bounded);
+    var (x_min, x_max) := ax.GetXLim;
+    var (y_min, y_max) := ax.GetYLim;
+    var (x_bounded, y_bounded) := (ax.isxbounded, ax.isybounded);
     
     FastDraw(dc_curve ->
     begin
@@ -535,7 +558,6 @@ begin
         
         var draw_y := o_y - (y.Value - ac.originxy.Item2) * ac.step.Item2;
         
-        //костыль
         if (draw_x < xx + x_border)  or
             (draw_y < yy + y_border) or 
             (draw_y > yy + size_y - y_border) then
@@ -544,7 +566,7 @@ begin
           continue;
         end;
         
-        DrawEllipseDC(dc_curve, draw_x, draw_y, markersize, markersize, crv.get_facecolor, 
+        DrawEllipseDC(dc_curve, draw_x, draw_y, markersize, markersize, crv.GetFacecolor, 
                       EmptyColor, 1);
         
         x += func_step;
@@ -560,7 +582,7 @@ begin
       var x := (crv.X[i] - ac.originxy.Item1) * ac.step.Item1;
       var y := (crv.Y[i] - ac.originxy.Item2) * ac.step.Item2;
       
-      DrawEllipseDC(dc_curve, o_x + x, o_y - y, markersize, markersize, crv.get_facecolor, 
+      DrawEllipseDC(dc_curve, o_x + x, o_y - y, markersize, markersize, crv.GetFacecolor, 
                     EmptyColor, 1);
     end;
   end);
@@ -620,9 +642,9 @@ end;
 
 //////////////////////////////////
 
-function AxesContainer.GetXYByMouse(x, y: real): (real?, real?);
+procedure AxesContainer.StartPositionDraw(x, y: real; mousebutton: integer);
 begin
-  var x1, y1: real?;
+  var x1, y1: real;
   if (x >= AbsoluteOrigin.Item1) 
       and (x <= AbsoluteOrigin.Item1 + FieldSize.Item1)
       and (y <= AbsoluteOrigin.Item2)
@@ -630,14 +652,8 @@ begin
   begin
     x1 := OriginXY.Item1 + (x - AbsoluteOrigin.Item1) / Step.Item1;
     y1 := OriginXY.Item2 + (AbsoluteOrigin.Item2 - y) / Step.Item2;
-  end 
-  else
-  begin
-    x1 := nil;
-    y1 := nil;
-  end;
-  
-  Result := (x1, y1);
+    DrawMousePosition(self, x1, y1);
+  end; 
 end;
 
 procedure AxesContainer.SetNumSize;
@@ -731,6 +747,7 @@ begin
   fsize := (size_x, size_y);
   fborders := (size_x * 0.05, size_y * 0.07);
   forigin := (fborders.Item1, size_y - fborders.Item2);
+  fclearablesize := (size_x/2, fborders.Item2*0.9);
   
       //отступы от краёв
   var x_border := fborders.Item1;
@@ -754,9 +771,9 @@ begin
   var min_y := real.MaxValue;
   var max_y := real.MinValue;
   
-  for var j := 0 to ax.Get_Curves.Count - 1 do
+  for var j := 0 to ax.GetCurves.Count - 1 do
   begin
-    var curve := ax.Get_Curves[j];
+    var curve := ax.GetCurves[j];
     
     if curve.IsFunctional then
     begin
@@ -804,32 +821,32 @@ begin
   
   if hasarrays_flag then
   begin
-    if not ax.is_x_bounded then
+    if not ax.isxbounded then
       step_x := field_x / ((max_x - min_x) * (1 + 2 * shift_x));
     
-    if not ax.is_y_bounded then
+    if not ax.isybounded then
       step_y := field_y / ((max_y - min_y) * (1 + 2 * shift_y));
   end
       else
   begin
-    min_x := ax.Get_XLim.Item1;
-    max_x := ax.Get_XLim.Item2;
-    min_y := ax.Get_YLim.Item1;
-    max_y := ax.Get_YLim.Item2;
+    min_x := ax.GetXLim.Item1;
+    max_x := ax.GetXLim.Item2;
+    min_y := ax.GetYLim.Item1;
+    max_y := ax.GetYLim.Item2;
   end;
   
-  if (ax.is_x_bounded) then
+  if (ax.isxbounded) then
   begin
-    step_x := field_x / (ax.Get_XLim.Item2 - ax.Get_XLim.Item1);
-    min_x := ax.Get_XLim.Item1;
-    max_x := ax.Get_XLim.Item2;
+    step_x := field_x / (ax.GetXLim.Item2 - ax.GetXLim.Item1);
+    min_x := ax.GetXLim.Item1;
+    max_x := ax.GetXLim.Item2;
   end;
   
-  if (ax.is_y_bounded) then
+  if (ax.isybounded) then
   begin
-    step_y := field_y / (ax.Get_YLim.Item2 - ax.Get_YLim.Item1);
-    min_y := ax.Get_YLim.Item1;
-    max_y := ax.Get_YLim.Item2;
+    step_y := field_y / (ax.GetYLim.Item2 - ax.GetYLim.Item1);
+    min_y := ax.GetYLim.Item1;
+    max_y := ax.GetYLim.Item2;
   end;
   
   fminmaxx := (min_x, max_x);
@@ -923,7 +940,7 @@ end;
 
 function AxesContainer.GetMarkerSize(ind: integer): real;
 begin
-  Result := GetAxes.Get_Curves[ind].get_markersize * GetPtSize;
+  Result := GetAxes.GetCurves[ind].get_markersize * GetPtSize;
 end;
 
 function AxesContainer.GetScatterSpace(ind: integer): real;
@@ -931,10 +948,37 @@ begin
   var (min_x, max_x) := fminmaxx;
   var (field_x, field_y) := ffield;
   var markersize := GetMarkerSize(ind);
-  var space := GetAxes.Get_Curves[ind].spacesize * GetPtSize;
+  var space := GetAxes.GetCurves[ind].spacesize * GetPtSize;
   Result := (max_x - min_x) / min(field_x / (space + markersize), field_y / (space + markersize));
 end;
 
-initialization
+procedure DrawMousePosition(ac: AxesContainer; x,y: real);
+begin
+  var (x_border, y_border) := ac.borders;
+  var (x_glob, y_glob) := ac.Position;
+  var (size_x, size_y) := ac.Size;
+  
+  var fnt := ac.NumsFont;
+  
+  var x_str,y_str: string;
+  Str(x:0:3,x_str); Str(y:0:3,y_str);
+  var text := 'X: '+x_str+' Y: '+y_str;
+  
+  var h := TextHeightPFont(text,fnt);
+  var W := TextWidthPFont(text,fnt);
+  
+  FastDraw(dc->
+  begin
+    DrawRectangleDC(dc,x_glob+size_x-ac.ClearableSize.Item1,y_glob,
+                    ac.ClearableSize.Item1,ac.ClearableSize.Item2,
+                    fig.GetFacecolor,EmptyColor,1);
+    DrawTextDC(dc,x_glob+size_x-w*1.1,y_glob,w,h,
+                  text,Alignment.LeftTop,0,fnt);
+  end);
+  
+end;
 
+
+
+initialization
 end. 
