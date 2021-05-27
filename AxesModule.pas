@@ -105,7 +105,7 @@ type
     fisYBounded: boolean := false;
     fGrid: boolean := false;
     fEqProp: boolean := false;
-    flegend: boolean;
+    flegend: boolean := false;
     ftitle: string;
     ftrackmouse: boolean := true;
     

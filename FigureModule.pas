@@ -4,6 +4,10 @@ interface
 
 uses AxesModule, System.Windows.Media;
 
+type
+  Axes = AxesModule.Axes;
+  Curve = AxesModule.Curve;
+
 ///Класс области размещения графиков
 type Figure = class
   private

@@ -50,8 +50,8 @@ begin
     end;
     ax.Grid := true;
     ax.Setylim(-12,12);
-    ax.Setlegend(Arr('one','two','three'));
     ax.EqualProportion := true;
+    ax.TrackMouse := false;
   end;
   Show(fig);
 end;
@@ -171,18 +171,61 @@ begin
   Show(fig);
 end;
 
+procedure test_distribution;
 begin
-  WindowSize(1280,720);
+  var fig := new Figure();
+  var ax := fig.AddSubplot();
+  var y := new real[100];
+  foreach var x in ArrRandomReal(10000,0,100) do
+    for var i := 0 to 99 do
+      if x < i+1 then
+      begin
+        y[i] += 1;
+        break;
+      end;  
+  ax.Bar(y);
+  ax.Title := 'Test Distribution';
+  ax.TrackMouse := false;
+  Show(fig);
+end;
+
+
+procedure test_diff_sizes;
+begin
+  var fig := new Figure();
+  var y1 := ArrRandomReal(100);
+  var y2 := ArrRandomReal(100);
+  var y3 := ArrRandomReal(100);
+  var ax := fig.AddSubplot(2,1,0);
+  var avg := y1.Zip(y2,(a,b)->(a+b)/2).Zip(y3,(a,b)->(a+b)/2);
+  var c := ax.Plot(avg.ToArray);
+  c.LineWidth := 3;
+  ax.Grid := true;
+  ax.Title := 'Average';
+  ax := fig.AddSubplot(2,3,3);
+  ax.Plot(y1);
+  ax := fig.AddSubplot(2,3,4);
+  ax.Plot(y2,Colors.Green);
+  ax := fig.AddSubplot(2,3,5);
+  ax.Plot(y3, Colors.Blue);
+  Show(fig);
+end;
+
+begin
+  WindowSize(800, 600);
+  //WindowSize(1280,1024);
   //WindowSize(1920,1280);
   
-  test_many_funcs_scatter;
+  //test_many_funcs_scatter;
   //test_func_array_scatter;
   //test_func_array;
-  //FastDraw(dc->test_many_arrays(10,10));
-  //test_many_funcs(2,2);
+  //test_many_arrays(5,5);
+  //test_many_funcs(5,5);
   //test_colors;
   //test_bars;
   //test_long_array;
   //test_grid;
+  //test_diff_sizes;
+  test_distribution;
   print(millisecondsdelta);
 end.

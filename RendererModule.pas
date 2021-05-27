@@ -388,6 +388,7 @@ begin
       CurveType.LineGraph: DrawLineGraph(ac, i);
       CurveType.ScatterGraph: DrawScatterGraph(ac, i);
       CurveType.BarGraph: DrawBarGraph(ac, i);
+      //вызов отрисовки нового типа графика
     end;
   end;
 end;
@@ -413,12 +414,14 @@ begin
       var x := ((crv.X[i] - crv.width / 2) - ac.originxy.Item1) * ac.step.Item1;
       var h := abs(crv.Y[i]) * ac.step.Item2;
       
-      DrawLineDC(dc_bars, o_x + x + width_draw, o_y, o_x + x + width_draw, 
-                 o_y + y_border * 0.3, Colors.Black, ac.LineWidth * 0.5);
-      TextOutDC(dc_bars, o_x + x + width_draw - TextWidthPFont(crv.GetBarLabels[i], 
-                ac.NumsFont) / 2,o_y + y_border * 0.35, crv.GetBarLabels[i],
-                Alignment.LeftTop, 0, ac.NumsFont);
-      
+      if ac.GetBarLabels <> nil then
+      begin
+        DrawLineDC(dc_bars, o_x + x + width_draw, o_y, o_x + x + width_draw, 
+                   o_y + y_border * 0.3, Colors.Black, ac.LineWidth * 0.5);
+        TextOutDC(dc_bars, o_x + x + width_draw - TextWidthPFont(crv.GetBarLabels[i], 
+                  ac.NumsFont) / 2,o_y + y_border * 0.35, crv.GetBarLabels[i],
+                  Alignment.LeftTop, 0, ac.NumsFont);
+      end;
       if (crv.Y[i] > 0) then
         DrawRectangleDC(dc_bars, o_x + x, null_y - h, crv.width * ac.Step.Item1,
                         h, crv.GetFacecolor, Colors.Black, crv.linewidth * 0.5)

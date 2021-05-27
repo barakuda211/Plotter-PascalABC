@@ -2,12 +2,12 @@
 
 interface
 
-uses FigureModule, AxesModule, RendererModule;
+uses FigureModule, RendererModule;
 
 type
   Figure = FigureModule.Figure;
-  Axes = AxesModule.Axes;
-  Curve = AxesModule.Curve;
+  Axes = FigureModule.Axes;
+  Curve = FigureModule.Curve;
   Color = System.Windows.Media.Color;
   Colors = System.Windows.Media.Colors;
 

@@ -24,8 +24,6 @@ LineWidth: real - вернуть/задать толщину линии граф
 
 Width: real - вернуть/задать ширину столбцов
 
-GetY(x: real): real? - возвращает значение Y по заданному X
-
 GetBarLabels: array of string - вернуть подписи столбцов
 
 
